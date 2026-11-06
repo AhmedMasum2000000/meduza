@@ -1,0 +1,36 @@
+# Meduza API on your VPS. install.sh runs this; you don't need to edit it.
+# "tunnel" profile: a free https address from Cloudflare, no domain needed (the address changes if the tunnel restarts).
+# "domain" profile: your own address, e.g. api.yourdomain.com, with automatic https (needs ports 80 and 443 free).
+services:
+  api:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - meduza-data:/data
+    ports:
+      - "127.0.0.1:8787:8787"
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --url http://api:8787
+    depends_on: [api]
+    profiles: ["tunnel"]
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on: [api]
+    profiles: ["domain"]
+
+volumes:
+  meduza-data:
+  caddy-data:

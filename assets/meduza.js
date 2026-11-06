@@ -21,6 +21,7 @@ const icons = {
   social: "M18 8a3 3 0 1 0-2.8-4M6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4",
   war: "M12 3 4 6v6c0 5 3.4 8 8 9 4.6-1 8-4 8-9V6zM12 8v5M12 16h.01",
   review: "M9 12l2 2 4-4M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
+  admin: "M14.5 9.5a4 4 0 1 0-1.1 2.8L20 19v2h-3v-2h-2v-2h-2l.4-4.7M15.5 8.5h.01",
 };
 const ico = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="${icons[n]}"/></svg>`;
 // Every page, grouped by what you are doing. Drives the sidebar and the home page.
@@ -28,7 +29,7 @@ const GROUPS = [
   ["Create", "Make videos from footage or a script.", [["studio", "New video", "A few choices, then the engine takes over"], ["editor", "Editor", "Pin a note to any moment"]]],
   ["Curate", "Pick what to make. Approve what goes out.", [["ideas", "Ideas", "Topics pulled from what is working"], ["review", "Review", "Approve or send back"], ["videos", "Library", "Everything finished"]]],
   ["Brands and socials", "Every brand, its pages and its schedule.", [["brands", "Brands", "Every brand and its pages"], ["social", "Schedule", "What posts where, and when"], ["analytics", "Analytics", "Where viewers stay or leave"]]],
-  ["Run", "Server, pipeline and spend.", [["war", "War room", "Health and money on one screen"]]],
+  ["Run", "Server, API keys, pipeline and spend.", [["war", "War room", "Health and money on one screen"], ["admin", "Admin", "API keys and your server"]]],
 ];
 const PLATFORMS = ["Instagram", "Facebook", "YouTube", "TikTok", "X", "LinkedIn", "Threads", "Pinterest", "Bluesky", "Snapchat", "Website", "Other"];
 const NICHES = ["Finance", "Beauty", "Fashion", "Fitness", "Food", "Sports", "Music", "Tech", "Gaming", "Education", "Travel", "Parenting", "Local business", "Real estate", "News", "Entertainment"];
@@ -45,9 +46,47 @@ const SAMPLE = () => ({ sample: true, cur: "all", brands: [
 const KEY = "meduzaWorkspace";
 let WS;
 try { WS = JSON.parse(localStorage.getItem(KEY)) || SAMPLE(); } catch { WS = SAMPLE(); }
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(WS)); } catch {} };
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(WS)); } catch {} pushWS(); };
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const B = (id) => WS.brands.find((b) => b.id === id);
+// ---------- your server (Admin) ----------
+const SKEY = "meduzaServer";
+let SRV = null, online = false, pushT;
+try { SRV = JSON.parse(localStorage.getItem(SKEY) || sessionStorage.getItem(SKEY) || "null"); } catch {}
+async function api(path, opt = {}) {
+  if (!SRV) throw new Error("Not connected");
+  let r;
+  try { r = await fetch(SRV.url + path, { method: opt.method || "GET", headers: { "Content-Type": "application/json", Authorization: "Bearer " + SRV.pass }, body: opt.body ? JSON.stringify(opt.body) : undefined }); }
+  catch { throw new Error("Can't reach the server. Check the address and that it is running."); }
+  const out = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(out.error || "Server said HTTP " + r.status);
+  return out;
+}
+function pushWS() { if (!online) return; clearTimeout(pushT); pushT = setTimeout(() => api("/api/workspace", { method: "PUT", body: { workspace: WS } }).catch(() => toast("Couldn't save to your server")), 400); }
+function srvPill() { const p = $("#srv"); if (p) p.innerHTML = online ? '<i class="dot"></i>Server connected' : '<i class="dot off"></i>Server not connected'; }
+async function connect(quiet) {
+  online = false;
+  try {
+    await api("/api/status"); online = true;
+    const w = await api("/api/workspace");
+    if (w.workspace) { WS = w.workspace; try { localStorage.setItem(KEY, JSON.stringify(WS)); } catch {} } else pushWS();
+  } catch (e) { if (!quiet) toast(e.message); }
+  srvPill(); return online;
+}
+const gb = (n) => (n / 1e9).toFixed(n >= 1e10 ? 0 : 1) + " GB";
+const KEYS = [
+  ["AI writing and coding", [["anthropic", "Claude (Anthropic)", "Scripts, research and code"], ["openai", "OpenAI", "GPT models and images"], ["gemini", "Google Gemini", "Cheap bulk text and translation"], ["openrouter", "OpenRouter", "Many models with one key"], ["deepseek", "DeepSeek", "Low-cost text"], ["groq", "Groq", "Very fast open models"], ["mistral", "Mistral", "Text models"], ["xai", "xAI Grok", "Grok models"]]],
+  ["Video generation", [["runway", "Runway", "Text and image to video"], ["luma", "Luma Dream Machine", "Text to video"], ["kling", "Kling", "Video. Paste access key and secret as key:secret"], ["heygen", "HeyGen", "Avatar and talking-head video"], ["replicate", "Replicate", "Open video and image models"], ["fal", "fal.ai", "Fast open video and image models"]]],
+  ["Image generation", [["stability", "Stability AI", "Stable Diffusion images"], ["leonardo", "Leonardo", "Images and design"], ["ideogram", "Ideogram", "Images with readable text"]]],
+  ["Voice and music", [["elevenlabs", "ElevenLabs", "Voice-over and voices"]]],
+  ["Research and stock", [["youtube", "YouTube Data API", "Trends and competitor videos"], ["pexels", "Pexels", "Free stock photos and video"], ["tavily", "Tavily", "Web research"]]],
+  ["Publishing", [["postiz", "Postiz", "Posts to every connected page"]]],
+];
+const INSTALL = "curl -fsSL https://raw.githubusercontent.com/AhmedMasum2000000/meduza/main/server/install.sh | bash";
+const krow = (id, name, what) => `<div class="krow" data-k="${id}"><div class="grow"><div class="title">${esc(name)}</div><small>${esc(what)}</small></div>
+  <span class="kst muted">Not set</span>
+  <form class="kform" data-act="save-key"><input class="field" type="password" name="key" placeholder="Paste key" autocomplete="off" aria-label="${esc(name)} key" required><button class="btn">Save</button></form>
+  <button type="button" class="btn ghost" data-act="test" hidden>Test</button><button type="button" class="btn ghost danger" data-act="rm" hidden>Remove</button></div>`;
 const col = (b) => SWATCH[(b?.c ?? 0) % SWATCH.length];
 const sw = (b, s = "") => `<span class="swatch" style="${s}background:linear-gradient(150deg,${col(b)[0]},${col(b)[1]})"></span>`;
 // Sample content belongs to sample brands; it disappears with them. Filtered by the brand picker.
@@ -205,8 +244,8 @@ const V = {
       return `<a class="tile" href="#/editor" style="--a:${col(b)[0]}55;--b:${col(b)[1]};--ar:${tall ? "9/14" : "16/10"}"><span class="chip ${it[4]}">${it[5]}</span><b>${esc(it[0])}</b><small class="muted">${esc(b.name)}, ${it[3]}</small></a>`; }).join("")}</div>` : empty("No finished videos for " + esc(curName()) + " yet.")}`; },
 
   ideas: () => `
-    <div class="head"><div><h1>Content ideas</h1><p class="lead">Topics the research stage found for each brand, with the reason each might land.</p></div><div class="hctl">${picker()}<button class="btn" data-toast="Research queued for tonight">Find more</button></div></div>
-    ${mine(IDEAS).length ? `<div class="grid g3">${mine(IDEAS).map(([t, id, why]) =>
+    <div class="head"><div><h1>Content ideas</h1><p class="lead">Topics the research stage found for each brand, with the reason each might land.</p></div><div class="hctl">${picker()}<button class="btn" data-find>Find ideas with AI</button></div></div>
+    ${mine([...(WS.ideas || []), ...IDEAS]).length ? `<div class="grid g3">${mine([...(WS.ideas || []), ...IDEAS]).map(([t, id, why]) =>
       `<div class="panel"><span class="chip" style="color:${col(B(id))[0]}">${esc(B(id).name)} · ${esc(B(id).niche)}</span><h2 style="margin:14px 0 8px;line-height:1.25">${esc(t)}</h2><p class="muted">${why}</p><button class="btn ghost" style="margin-top:16px" data-toast="Added to the queue">Send to queue</button></div>`).join("")}</div>`
       : empty("No ideas for " + esc(curName()) + " yet. Research fills this once the brand's pages are connected to the engine.")}`,
 
@@ -240,10 +279,27 @@ const V = {
       <div class="grow"><div class="title">${esc(t)}</div><small>${esc(B(id).name)}, ${k.toLowerCase()}${why ? ` · <span class="y">${why}</span>` : ""}</small></div>
       <a class="btn ghost" href="#/editor">Open</a><button class="btn" data-ok>Approve</button></div>`).join("") || '<p class="muted">All caught up. Nothing waiting on you.</p>'}</div>`,
 
+  admin: () => `
+    <div class="head"><div><h1>Admin</h1><p class="lead">Connect your server, then add the keys Meduza uses. Keys go straight to your server and are stored there encrypted. They are never kept in this browser or in GitHub, and the site can't read them back.</p></div></div>
+    <div class="panel" id="conn" style="margin-bottom:14px">${online ? `<div class="ph"><div><h2>Server connected</h2><p class="muted">${esc(SRV.url)}</p></div><button class="btn ghost" data-act="disconnect">Disconnect</button></div><div class="grid g4" id="sstat" style="margin-top:14px"></div>`
+      : `<h2>Connect your server</h2><p class="muted">Paste the address and admin password the install command printed.</p>
+      <form class="cform" data-act="connect"><input class="field" name="url" type="url" placeholder="https://… server address" required value="${esc(SRV?.url || "")}" aria-label="Server address"><input class="field" name="pass" type="password" placeholder="Admin password" required autocomplete="current-password" aria-label="Admin password"><button class="btn">Connect</button>
+      <label class="rem"><input type="checkbox" name="rem" ${SRV?.rem ? "checked" : ""}> Remember on this device</label></form>
+      <details class="how"><summary>No server yet? Set it up in one step</summary><ol>
+        <li>In Hostinger hPanel open your VPS and click <b>Browser terminal</b> (or connect by SSH as root).</li>
+        <li>Paste this and press Enter:<div class="codebox"><code id="cmd">${INSTALL}</code><button type="button" class="btn ghost" data-act="copy">Copy</button></div></li>
+        <li>It prints a server address and an admin password. Paste them above.</li></ol>
+        <p class="muted">Have a domain? Point a subdomain such as api.yourdomain.com to the VPS, then run the same command with <code>DOMAIN=api.yourdomain.com</code> before <code>bash</code> for a permanent address. Run the command again any time to update.</p></details>`}</div>
+    <fieldset class="keys" ${online ? "" : "disabled"}>${online ? "" : '<p class="muted" style="margin:0 0 14px">Connect your server first. Keys are only ever sent to it.</p>'}
+    ${KEYS.map(([g, list]) => `<div class="panel" style="margin-bottom:14px"><h2>${g}</h2>${list.map((k) => krow(...k)).join("")}</div>`).join("")}
+    <div class="panel"><h2>Anything else</h2><p class="muted">Any other service: give it a name and paste its key.</p><div id="custom"></div>
+      <form class="cform" data-act="add-custom" style="margin-top:12px"><input class="field" name="label" placeholder="Service name, e.g. Pika" required aria-label="Service name"><input class="field" type="password" name="key" placeholder="Paste key" autocomplete="off" required aria-label="Key"><button class="btn">Save</button></form></div>
+    </fieldset>`,
+
   war: () => `
     <div class="head"><div><h1>War room</h1><p class="lead">The server, the pipeline and the money, on one screen.</p></div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn" data-link="panel">Open control panel</a><a class="btn ghost" data-link="vpsRepo">Server repo</a><a class="btn ghost" data-link="engineRepo">Engine repo</a></div></div>
-    <div class="grid g3" style="margin-bottom:16px"><div class="panel">${ring(.31, "processor, 2 cores", "31%")}</div><div class="panel">${ring(.58, "memory, of 8 GB", "4.6 GB")}</div><div class="panel">${ring(.74, "disk, of 100 GB", "74 GB", "var(--soft)")}</div></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn" href="#/admin">Open control panel</a><a class="btn ghost" data-link="vpsRepo">Server repo</a><a class="btn ghost" data-link="engineRepo">Engine repo</a></div></div>
+    <p class="muted" id="wnote" style="margin:-10px 0 14px">Sample numbers. Connect your server in Admin to see it live.</p><div class="grid g3" id="rings" style="margin-bottom:16px"><div class="panel">${ring(.31, "processor, 2 cores", "31%")}</div><div class="panel">${ring(.58, "memory, of 8 GB", "4.6 GB")}</div><div class="panel">${ring(.74, "disk, of 100 GB", "74 GB", "var(--soft)")}</div></div>
     <div class="panel" style="margin-bottom:16px"><h2>Pipeline</h2><p class="muted">Items at each stage right now.</p>
       <div class="river">${[["Research", 2], ["Evidence", 1], ["Script", 3, "busy"], ["Fact-check", 2, "hot"], ["Voice", 0], ["Render", 1, "busy"], ["Reels", 4], ["Package", 0], ["Approval", 5]].map(([n, c, k = ""]) => `<div class="${k}"><b class="num">${c}</b>${n}</div>`).join("")}</div></div>
     <div class="grid g3">
@@ -282,6 +338,70 @@ function celebrate() {
   if (calm) mood(m, "hearts"); else { setTimeout(() => mood(m, "wink"), 250); setTimeout(() => mood(m, "hearts"), 1150); }
 }
 const HOOKS = {
+  admin: () => {
+    const host = $("main");
+    const paint = (id, k) => { const row = $(`[data-k="${id}"]`); if (!row) return; const st = $(".kst", row);
+      st.className = "kst " + (k?.test?.ok === true ? "ok" : k?.test?.ok === false ? "bad" : "muted");
+      st.textContent = !k ? "Not set" : k.test ? `${k.test.note} · ••••${k.last4}` : `Saved ••••${k.last4}`;
+      $$("[data-act=test],[data-act=rm]", row).forEach((b) => (b.hidden = !k)); $("input", row).placeholder = k ? "Paste a new key to replace it" : "Paste key"; };
+    const refresh = async () => {
+      if (!online) return;
+      const [{ keys }, s] = await Promise.all([api("/api/keys"), api("/api/status")]);
+      $("#custom").innerHTML = keys.filter((k) => k.id.startsWith("custom-")).map((k) => krow(k.id, k.label || k.id.slice(7), "Custom key")).join("");
+      keys.forEach((k) => paint(k.id, k));
+      $("#sstat").innerHTML = [["Keys saved", s.keys], ["Memory free", gb(s.mem.free)], ["Disk free", s.disk ? gb(s.disk.free) : "?"], ["Up for", Math.round(s.uptime / 3600) + " h"]].map(([l, v]) => `<div class="panel stat"><b class="num">${v}</b><span class="muted">${l}</span></div>`).join("");
+    };
+    refresh().catch((e) => toast(e.message));
+    host.onclick = async (e) => {
+      const t = e.target.closest("[data-act]"); if (!t) return; const id = t.closest("[data-k]")?.dataset.k;
+      try {
+        if (t.dataset.act === "disconnect") { SRV = null; online = false; try { localStorage.removeItem(SKEY); sessionStorage.removeItem(SKEY); } catch {} srvPill(); go(); }
+        else if (t.dataset.act === "copy") { navigator.clipboard.writeText(INSTALL).then(() => toast("Copied"), () => { const r = document.createRange(); r.selectNodeContents($("#cmd")); getSelection().removeAllRanges(); getSelection().addRange(r); toast("Selected. Copy it with your keyboard."); }); }
+        else if (t.dataset.act === "test") { $(".kst", t.closest("[data-k]")).textContent = "Testing…"; await api(`/api/keys/${id}/test`, { method: "POST" }); await refresh(); }
+        else if (t.dataset.act === "rm") { if (!t.dataset.sure) { t.dataset.sure = "1"; t.textContent = "Tap again"; setTimeout(() => { if (t.isConnected) { delete t.dataset.sure; t.textContent = "Remove"; } }, 3000); return; }
+          await api(`/api/keys/${id}`, { method: "DELETE" }); toast("Key removed"); await refresh(); if (id.startsWith("custom-")) t.closest("[data-k]")?.remove(); else paint(id, null); }
+      } catch (err) { toast(err.message); }
+    };
+    host.onsubmit = async (e) => {
+      e.preventDefault(); const f = e.target, v = (n) => f.elements[n]?.value.trim() || "", act = f.dataset.act;
+      try {
+        if (act === "connect") {
+          SRV = { url: v("url").replace(/\/+$/, ""), pass: v("pass"), rem: f.elements.rem.checked };
+          try { localStorage.removeItem(SKEY); sessionStorage.removeItem(SKEY); (SRV.rem ? localStorage : sessionStorage).setItem(SKEY, JSON.stringify(SRV)); } catch {}
+          if (await connect()) { toast("Connected to your server"); go(); }
+        } else if (act === "save-key") {
+          const id = f.closest("[data-k]").dataset.k; await api(`/api/keys/${id}`, { method: "PUT", body: { key: v("key") } }); f.reset(); toast("Saved. Testing it now…");
+          await api(`/api/keys/${id}/test`, { method: "POST" }); await refresh();
+        } else if (act === "add-custom") {
+          const slug = v("label").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "key";
+          await api(`/api/keys/custom-${slug}`, { method: "PUT", body: { key: v("key"), label: v("label") } }); f.reset(); toast("Saved"); await refresh();
+        }
+      } catch (err) { toast(err.message); }
+    };
+  },
+  war: () => {
+    if (!online) return;
+    api("/api/status").then((s) => {
+      const used = (t, f) => (t - f) / t;
+      $("#rings").innerHTML = `<div class="panel">${ring(Math.min(1, s.load / s.cpus), `processor, ${s.cpus} cores`, Math.round(Math.min(1, s.load / s.cpus) * 100) + "%")}</div>`
+        + `<div class="panel">${ring(used(s.mem.total, s.mem.free), "memory, of " + gb(s.mem.total), gb(s.mem.total - s.mem.free))}</div>`
+        + (s.disk ? `<div class="panel">${ring(used(s.disk.total, s.disk.free), "disk, of " + gb(s.disk.total), gb(s.disk.total - s.disk.free), "var(--soft)")}</div>` : "");
+      $("#wnote").textContent = "Live from your server. Pipeline and spend are samples until the engine reports them.";
+    }).catch((e) => toast(e.message));
+  },
+  ideas: () => {
+    const btn = $("[data-find]");
+    btn.onclick = async () => {
+      if (!online) return toast("Connect your server in Admin first, then add an AI key.");
+      const b = WS.cur !== "all" && B(WS.cur) ? B(WS.cur) : WS.brands[0];
+      if (!b) return toast("Add a brand first");
+      btn.disabled = true; btn.textContent = `Thinking about ${b.name}…`;
+      try {
+        const r = await api("/api/ai/ideas", { method: "POST", body: { brand: { name: b.name, niche: b.niche, lang: b.lang, lane: b.lane } } });
+        WS.ideas = [...r.ideas.map((x) => [x.title, b.id, x.why]), ...(WS.ideas || [])].slice(0, 60); save(); go(); toast(`${r.ideas.length} new ideas for ${b.name}`);
+      } catch (e) { toast(e.message); btn.disabled = false; btn.textContent = "Find ideas with AI"; }
+    };
+  },
   brands: () => {
     const host = $("main"), list = () => { $("#bl").innerHTML = WS.brands.map(brandCard).join(""); };
     const commit = () => { WS.sample = false; save(); go(); };
@@ -357,6 +477,7 @@ $("#menu").onclick = () => setMenu(!document.body.classList.contains("menu-open"
 $("#scrim").onclick = () => setMenu(false);
 addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("menu-open")) { setMenu(false); $("#menu").focus(); } });
 $("#motion").textContent = calm ? "Motion off" : "Motion on";
+if (SRV) connect(true).then((ok) => ok && go());
 $("#motion").onclick = () => { localStorage.setItem("meduzaMotion", calm ? "on" : "off"); location.reload(); };
 addEventListener("pointermove", (e) => { document.body.style.setProperty("--mx", e.clientX + "px"); document.body.style.setProperty("--my", e.clientY + "px"); });
 addEventListener("hashchange", go); document.fonts?.ready.then(go); go();
