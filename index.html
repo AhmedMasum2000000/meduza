@@ -3,86 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Meduza</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" />
-  <style>
-    :root { --bg:#090909; --card:#121212; --ink:#f5f5f5; --muted:#9a9a9a; --line:#242424; --green:#22c55e; }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: Montserrat, sans-serif; overflow-x: hidden; }
-    button { font: inherit; color: inherit; }
-    .scrim { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); border: 0; z-index: 30; }
-    .scrim.show { display: block; }
-    .side { position: fixed; inset: 0 auto 0 0; z-index: 40; width: min(17.5rem, 88vw); background: var(--card); border-right: 1px solid var(--line); display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 200ms ease; }
-    .side.open { transform: none; }
-    .brand { display: flex; align-items: center; justify-content: space-between; padding: 16px; }
-    .logo { height: 28px; width: auto; }
-    .icon-btn { width: 44px; height: 44px; border: 0; background: transparent; border-radius: 12px; color: var(--muted); }
-    nav { display: flex; flex-direction: column; gap: 4px; padding: 0 12px 16px; overflow: auto; }
-    nav button { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); text-align: left; cursor: pointer; }
-    nav button.active { background: #1a1a1a; color: var(--ink); box-shadow: inset 3px 0 0 var(--green); }
-    .foot { margin-top: auto; border-top: 1px solid var(--line); padding: 12px 16px; font-size: 12px; color: var(--muted); }
-    .top { position: sticky; top: 0; z-index: 20; height: 56px; display: flex; align-items: center; gap: 8px; padding: 0 8px; border-bottom: 1px solid var(--line); background: var(--card); }
-    .content { padding: 20px 16px 40px; max-width: 960px; margin: 0 auto; }
-    .eyebrow { font-size: 12px; letter-spacing: .14em; color: var(--green); font-weight: 600; }
-    .crumb { margin-top: 4px; font-size: 12px; letter-spacing: .12em; color: var(--muted); }
-    h1 { margin: 16px 0 0; font-size: clamp(1.6rem, 1.1rem + 2.2vw, 2.4rem); letter-spacing: -.03em; line-height: 1.1; }
-    .lead { margin: 10px 0 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-    .stat, .panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
-    .stat b { display: block; font-size: 1.5rem; letter-spacing: -.03em; }
-    .stat span, .muted { color: var(--muted); font-size: 12px; }
-    .panel { margin-top: 12px; }
-    .panel h2 { margin: 0; font-size: 15px; }
-    .row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 14px; }
-    .row:first-of-type { border-top: 0; }
-    .soon { margin-top: 24px; text-align: center; padding: 40px 16px; }
-    @media (min-width: 900px) {
-      .side { transform: none; width: 240px; }
-      .scrim { display: none !important; }
-      .top, #close { display: none; }
-      .main { margin-left: 240px; }
-      .content { padding: 32px; }
-      .grid { grid-template-columns: repeat(4, 1fr); }
-    }
-  </style>
+  <meta name="theme-color" content="#06131a" />
+  <title>Meduza Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Instrument+Sans:wght@400..700&family=Hind+Siliguri:wght@400;500;600;700&family=Hind:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="assets/meduza.css" />
 </head>
 <body>
-  <button class="scrim" id="scrim" aria-label="Close menu"></button>
-  <aside class="side" id="side">
-    <div class="brand">
-      <svg class="logo" viewBox="0 0 220 48" aria-label="Meduza"><text x="0" y="36" font-family="Montserrat,Arial" font-size="32" font-weight="700" fill="#fff">M</text><text x="28" y="36" font-family="Montserrat,Arial" font-size="32" font-weight="700" fill="#22c55e">e</text><text x="50" y="36" font-family="Montserrat,Arial" font-size="32" font-weight="700" fill="#fff">duza</text></svg>
-      <button class="icon-btn" id="close" aria-label="Close menu">Close</button>
+  <aside class="rail">
+    <a class="mark" href="#/home" style="text-decoration:none;color:inherit">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M5 15a11 11 0 0 1 22 0z" fill="#7cf5d4" opacity=".9"/><path d="M8 17c0 4-2 5-1 9M13 17c0 5 2 6 0 11M19 17c0 5-2 6 0 11M24 17c0 4 2 5 1 9" stroke="#7cf5d4" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>M<i>e</i>duza</span>
+    </a>
+    <nav id="nav" aria-label="Sections"></nav>
+    <div class="foot">
+      <div class="engine"><i class="dot sting"></i>Engine is cutting</div>
+      Design preview. Sample data.<br />
+      <button id="motion" type="button">Turn motion off</button>
     </div>
-    <nav id="nav"></nav>
-    <div class="foot">Engine idle</div>
   </aside>
-  <div class="main">
-    <header class="top">
-      <button class="icon-btn" id="open" aria-label="Open menu">Menu</button>
-      <svg class="logo" viewBox="0 0 220 48" aria-hidden="true"><text x="0" y="36" font-family="Montserrat,Arial" font-size="32" font-weight="700" fill="#fff">M</text><text x="28" y="36" font-family="Montserrat,Arial" font-size="32" font-weight="700" fill="#22c55e">e</text><text x="50" y="36" font-family="Montserrat,Arial" font-size="32" font-weight="700" fill="#fff">duza</text></svg>
-    </header>
-    <div class="content" id="view"></div>
-  </div>
-  <script>
-    const pages = [["studio","Studio","MEDUZA / STUDIO"],["home","Home","MEDUZA / HOME"],["editor","Editor","MEDUZA / EDITOR"],["videos","My videos","MEDUZA / MY VIDEOS"],["ideas","Content Ideas","MEDUZA / CONTENT IDEAS"],["analytics","Analytics","MEDUZA / ANALYTICS"],["brands","Brands Dashboard","MEDUZA / BRANDS"],["social","Social Media","MEDUZA / SOCIAL"]];
-    const nav = document.getElementById("nav"), view = document.getElementById("view"), side = document.getElementById("side"), scrim = document.getElementById("scrim");
-    const close = () => { side.classList.remove("open"); scrim.classList.remove("show"); };
-    const open = () => { side.classList.add("open"); scrim.classList.add("show"); };
-    document.getElementById("open").onclick = open;
-    document.getElementById("close").onclick = close;
-    scrim.onclick = close;
-    function render(id) {
-      close();
-      [...nav.children].forEach((b) => b.classList.toggle("active", b.dataset.id === id));
-      const page = pages.find((p) => p[0] === id);
-      if (id === "studio" || id === "home") {
-        view.innerHTML = `<p class="eyebrow">CUT ENGINE IDLE</p><p class="crumb">${page[2]}</p><h1>${id==="studio"?"Studio":"Workspace"}</h1><p class="lead">Ten finance brands. One cut pipeline. Built to read on a phone.</p><div class="grid"><div class="stat"><b>10</b><span>Brands</span></div><div class="stat"><b>3</b><span>Longform / week</span></div><div class="stat"><b>30</b><span>Reels / brand</span></div><div class="stat"><b>Idle</b><span>Cut engine</span></div></div><section class="panel"><h2>Queue</h2><div class="row"><span>RupeeLogic weekly brief</span><span class="muted">Ready</span></div><div class="row"><span>TakaTalk savings hook</span><span class="muted">Review</span></div><div class="row"><span>NiveshPath SIP explainer</span><span class="muted">Draft</span></div></section>`;
-        return;
-      }
-      view.innerHTML = `<p class="eyebrow">CUT ENGINE IDLE</p><p class="crumb">${page[2]}</p><section class="panel soon"><p class="eyebrow">MEDUZA</p><h1>${page[1]}</h1><p class="lead">This section is not live yet.</p></section>`;
-    }
-    pages.forEach(([id, label]) => { const b = document.createElement("button"); b.type="button"; b.dataset.id=id; b.textContent=label; b.onclick=()=>render(id); nav.appendChild(b); });
-    render("studio");
-  </script>
+  <header class="topbar"><button id="menu" aria-label="Open menu">Menu</button><b style="font-family:var(--display)">Meduza</b></header>
+  <main></main>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="assets/meduza.js"></script>
 </body>
 </html>
