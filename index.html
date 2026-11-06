@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meduza</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0a0a; color: #fff; font-family: Montserrat, sans-serif; min-height: 100vh; }
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 240px; background: #111; border-right: 1px solid #222; padding: 16px; }
+    .logo { height: 32px; margin-bottom: 24px; }
+    .nav a { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border-radius: 12px; color: #a0a0a0; text-decoration: none; font-size: 14px; font-weight: 500; margin-bottom: 4px; transition: all 0.2s; }
+    .nav a:hover, .nav a.active { background: #1a1a1a; color: #fff; }
+    .nav a.active { box-shadow: inset 3px 0 0 #22c55e; }
+    .main { margin-left: 240px; padding: 32px; }
+    h1 { font-size: 36px; background: linear-gradient(135deg, #fff 0%, #22c55e 50%, #16a34a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 700; }
+    .card { background: #111; border: 1px solid #222; border-radius: 18px; padding: 40px; max-width: 420px; text-align: center; margin-top: 40px; }
+    .status { font-size: 12px; letter-spacing: 0.14em; color: #22c55e; font-weight: 600; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <svg class="logo" viewBox="0 0 340 80" width="160" height="38">
+      <defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#86efac"/><stop offset="100%" stop-color="#22c55e"/></linearGradient></defs>
+      <text x="8" y="56" font-family="Montserrat,Arial" font-size="48" font-weight="800" fill="#fff">M</text>
+      <text x="52" y="56" font-family="Montserrat,Arial" font-size="48" font-weight="800" fill="url(#g)">e</text>
+      <text x="88" y="56" font-family="Montserrat,Arial" font-size="48" font-weight="800" fill="#fff">duza</text>
+    </svg>
+    <nav class="nav">
+      <a href="#" class="active">Studio</a>
+      <a href="#">Home</a>
+      <a href="#">Editor</a>
+      <a href="#">My videos</a>
+      <a href="#">Content Ideas</a>
+      <a href="#">Analytics</a>
+      <a href="#">Brands Dashboard</a>
+      <a href="#">Social Media Control Panel</a>
+    </nav>
+  </aside>
+  <main class="main">
+    <div class="status">MEDUZA / STUDIO</div>
+    <h1>Meduza Studio</h1>
+    <p style="margin-top:12px;color:#a0a0a0;max-width:480px;">Your AI video editing workspace. Dark theme, green accents, reactive UI.</p>
+    <div class="card">
+      <div style="font-size:32px;margin-bottom:12px;">✨</div>
+      <h2 style="font-size:24px;background:linear-gradient(135deg,#fff,#22c55e);-webkit-background-clip:text;background-clip:text;color:transparent;">Coming Soon</h2>
+      <p style="margin-top:12px;color:#a0a0a0;font-size:14px;">Full interactive version deploys via the GitHub Actions workflow.</p>
+    </div>
+  </main>
+</body>
+</html>
