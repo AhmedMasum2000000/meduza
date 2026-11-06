@@ -27,41 +27,77 @@ const ico = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 const GROUPS = [
   ["Create", "Make videos from footage or a script.", [["studio", "New video", "A few choices, then the engine takes over"], ["editor", "Editor", "Pin a note to any moment"]]],
   ["Curate", "Pick what to make. Approve what goes out.", [["ideas", "Ideas", "Topics pulled from what is working"], ["review", "Review", "Approve or send back"], ["videos", "Library", "Everything finished"]]],
-  ["Brands and socials", "Every brand, its pages and its schedule.", [["brands", "Brands", "Ten voices and their pages"], ["social", "Schedule", "What posts where, and when"], ["analytics", "Analytics", "Where viewers stay or leave"]]],
+  ["Brands and socials", "Every brand, its pages and its schedule.", [["brands", "Brands", "Every brand and its pages"], ["social", "Schedule", "What posts where, and when"], ["analytics", "Analytics", "Where viewers stay or leave"]]],
   ["Run", "Server, pipeline and spend.", [["war", "War room", "Health and money on one screen"]]],
 ];
-const SOC = [["Instagram", 1], ["Facebook", 1], ["YouTube", 1], ["TikTok", 0]]; // TikTok only for Bangladesh brands: it is banned in India
-const REVIEW = [
-  ["SIP शुरू करने से पहले ये जान लें", "MoneyAaj", "Reel", "A rate has no official source"],
-  ["EMI का असली खर्च", "RupeeLogic", "Reel", "Title reads as advice, not explanation"],
-  ["জরুরি তহবিল: কত টাকা যথেষ্ট?", "TakaTalk", "Long-form", ""],
-  ["সঞ্চয়পত্রের মুনাফা কীভাবে হিসাব হয়", "SonchoyGhor", "Reel", ""],
-];
-
-const BRANDS = [
-  ["TakaTalk", "Bengali", "First salary, first savings", "#ffd400", "#0f4a4a"],
-  ["MoneyAaj", "Hindi", "Daily money news, explained", "#f2c14e", "#4a3410"],
-  ["RupeeLogic", "Hindi", "The maths behind money choices", "#8fb8ff", "#132a55"],
-  ["NiveshPath", "Hindi", "Long-term investing basics", "#c6a4ff", "#2c1a55"],
-  ["SonchoyGhor", "Bengali", "Household saving habits", "#ff9d6c", "#552413"],
-  ["PaisaPoint", "Hindi", "Banking and cards", "#6ce0ff", "#0d3d52"],
-  ["TakaTori", "Bengali", "Mobile wallets and transfers", "#ff5c8a", "#521327"],
-  ["BachatBuddy", "Hindi", "Budgeting for students", "#b4f06a", "#2a4a10"],
-  ["ArthoKotha", "Bengali", "Economy in plain words", "#ffd9a0", "#4a3515"],
-  ["KharchaClub", "Hindi", "Spending smarter", "#9af0e0", "#12443c"],
-];
+const PLATFORMS = ["Instagram", "Facebook", "YouTube", "TikTok", "X", "LinkedIn", "Threads", "Pinterest", "Bluesky", "Snapchat", "Website", "Other"];
+const NICHES = ["Finance", "Beauty", "Fashion", "Fitness", "Food", "Sports", "Music", "Tech", "Gaming", "Education", "Travel", "Parenting", "Local business", "Real estate", "News", "Entertainment"];
+const SWATCH = [["#ffd400", "#0f4a4a"], ["#ff9d6c", "#552413"], ["#8fb8ff", "#132a55"], ["#c6a4ff", "#2c1a55"], ["#ff5c8a", "#521327"], ["#b4f06a", "#2a4a10"], ["#6ce0ff", "#0d3d52"], ["#ffd9a0", "#4a3515"]];
+// Sample workspace: a few brands in different niches, so the tool shows how it works before anyone adds their own.
+const SAMPLE = () => ({ sample: true, cur: "all", brands: [
+  { id: "b1", name: "TakaTalk", niche: "Finance", lang: "Bengali", lane: "First salary, first savings", c: 0, pages: [["Instagram", "@takatalk"], ["Facebook", "TakaTalk"], ["YouTube", "@takatalk"], ["TikTok", "@takatalk.bd"]] },
+  { id: "b2", name: "GlowDesk", niche: "Beauty", lang: "English", lane: "Skincare on a student budget", c: 1, pages: [["Instagram", "@glowdesk"], ["Instagram", "@glowdesk.men"], ["TikTok", "@glowdesk"], ["Pinterest", "glowdesk"]] },
+  { id: "b3", name: "Gully XI", niche: "Sports", lang: "Hindi", lane: "Cricket stats and fan takes", c: 2, pages: [["Instagram", "@gullyxi"], ["Facebook", "Gully XI"], ["YouTube", "@gullyxi"], ["X", "@gullyxi"]] },
+  { id: "b4", name: "Spice Ledger", niche: "Food", lang: "Urdu", lane: "Ten-minute home recipes", c: 5, pages: [["Instagram", "@spiceledger"], ["Facebook", "Spice Ledger"], ["YouTube", "@spiceledger"]] },
+  { id: "b5", name: "Night Shift FM", niche: "Music", lang: "English", lane: "New underground releases", c: 3, pages: [["Instagram", "@nightshift.fm"], ["TikTok", "@nightshiftfm"], ["YouTube", "@nightshiftfm"], ["Threads", "@nightshift.fm"]] },
+  { id: "b6", name: "ByteBhai", niche: "Tech", lang: "Hindi", lane: "Phone and app tips", c: 6, pages: [["YouTube", "@bytebhai"], ["Instagram", "@bytebhai"], ["X", "@bytebhai"], ["LinkedIn", "ByteBhai"]] },
+] });
+const KEY = "meduzaWorkspace";
+let WS;
+try { WS = JSON.parse(localStorage.getItem(KEY)) || SAMPLE(); } catch { WS = SAMPLE(); }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(WS)); } catch {} };
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const B = (id) => WS.brands.find((b) => b.id === id);
+const col = (b) => SWATCH[(b?.c ?? 0) % SWATCH.length];
+const sw = (b, s = "") => `<span class="swatch" style="${s}background:linear-gradient(150deg,${col(b)[0]},${col(b)[1]})"></span>`;
+// Sample content belongs to sample brands; it disappears with them. Filtered by the brand picker.
 const QUEUE = [
-  ["জরুরি তহবিল: কত টাকা যথেষ্ট?", "TakaTalk", "Long-form", "9:42", "ready", "Ready"],
-  ["SIP शुरू करने से पहले ये जान लें", "MoneyAaj", "Reel", "0:41", "review", "In review"],
-  ["সঞ্চয়পত্রের মুনাফা কীভাবে হিসাব হয়", "SonchoyGhor", "Reel", "0:38", "cutting", "Cutting"],
-  ["PPF बनाम FD: फर्क कहाँ है?", "NiveshPath", "Long-form", "10:15", "", "Draft"],
-  ["EMI का असली खर्च", "RupeeLogic", "Reel", "0:44", "ready", "Ready"],
+  ["জরুরি তহবিল: কত টাকা যথেষ্ট?", "b1", "Long-form", "9:42", "ready", "Ready"],
+  ["Sunscreen under 500, tested", "b2", "Reel", "0:41", "review", "In review"],
+  ["इस सीज़न के 5 सबसे तेज़ अर्धशतक", "b3", "Reel", "0:38", "cutting", "Cutting"],
+  ["دس منٹ کی دال", "b4", "Reel", "0:44", "ready", "Ready"],
+  ["Five releases you missed this week", "b5", "Long-form", "8:10", "", "Draft"],
+  ["फ़ोन की बैटरी के 3 झूठ", "b6", "Reel", "0:36", "review", "In review"],
 ];
-const brand = (n) => BRANDS.find((b) => b[0] === n) || BRANDS[0];
-const rows = (list) => list.map(([t, b, k, d, s, l]) => `
-  <div class="row"><span class="swatch" style="background:linear-gradient(150deg,${brand(b)[3]},${brand(b)[4]})"></span>
-  <div class="grow"><div class="title">${t}</div><small>${b}, ${k.toLowerCase()}</small></div>
+const REVIEW = [
+  ["Sunscreen under 500, tested", "b2", "Reel", "A product claim has no source"],
+  ["फ़ोन की बैटरी के 3 झूठ", "b6", "Reel", "Title reads as clickbait"],
+  ["জরুরি তহবিল: কত টাকা যথেষ্ট?", "b1", "Long-form", ""],
+  ["دس منٹ کی دال", "b4", "Reel", ""],
+];
+const IDEAS = [
+  ["বেতনের প্রথম দিনে কী করবেন", "b1", "Salary week starts in 4 days"],
+  ["Night routine in 3 steps", "b2", "Saved 1,900 times on a similar page"],
+  ["Death-over economy, explained", "b3", "Final is in 6 days"],
+  ["Iftar in 15 minutes", "b4", "Searches up 3x this week"],
+  ["One beat, four ways", "b5", "Comments keep asking how"],
+  ["UPI scam signs", "b6", "Asked 212 times in comments"],
+];
+const mine = (list) => list.filter((x) => B(x[1]) && (WS.cur === "all" || x[1] === WS.cur));
+const curName = () => (WS.cur === "all" ? "all brands" : B(WS.cur)?.name || "all brands");
+const picker = () => `<label class="wpick"><span class="muted">Showing</span><select class="field" data-pick><option value="all">All brands</option>${WS.brands.map((b) => `<option value="${b.id}"${b.id === WS.cur ? " selected" : ""}>${esc(b.name)}</option>`).join("")}</select></label>`;
+const empty = (msg) => `<div class="emptyc"><p>${msg}</p><a class="btn ghost" href="#/brands">Go to Brands</a></div>`;
+const rows = (list) => list.map(([t, id, k, d, s, l]) => `
+  <div class="row">${sw(B(id))}
+  <div class="grow"><div class="title">${esc(t)}</div><small>${esc(B(id).name)}, ${k.toLowerCase()}</small></div>
   <span class="num muted">${d}</span><span class="chip ${s}">${s === "cutting" ? '<i class="dot sting"></i>' : ""}${l}</span></div>`).join("");
+const pageCount = () => WS.brands.reduce((n, b) => n + b.pages.length, 0);
+const byPlatform = () => { const m = {}; WS.brands.filter((b) => WS.cur === "all" || b.id === WS.cur).forEach((b) => b.pages.forEach(([p]) => (m[p] = (m[p] || 0) + 1))); return Object.entries(m).sort((x, y) => y[1] - x[1]); };
+const brandCard = (b) => `<div class="panel bcard" data-b="${b.id}">
+  ${sw(b, "width:64px;height:64px;border-radius:18px;")}
+  <div><h2>${esc(b.name)}</h2><p class="muted">${esc(b.niche)}${b.lang ? " · " + esc(b.lang) : ""}${b.lane ? ". " + esc(b.lane) + "." : ""}</p></div>
+  <span class="chip">${b.pages.length} ${b.pages.length === 1 ? "page" : "pages"}</span>
+  <div class="socs">${b.pages.map(([p, h], i) => `<span class="soc"><b>${esc(p)}</b><span>${esc(h)}</span><button type="button" class="x" data-act="rm-page" data-i="${i}" aria-label="Remove ${esc(p)} ${esc(h)}">×</button></span>`).join("") || '<span class="muted">No pages yet. Add the first one below.</span>'}</div>
+  <form class="addp" data-act="add-page"><select class="field" name="p" aria-label="Platform">${PLATFORMS.map((p) => `<option>${p}</option>`).join("")}</select><input class="field" name="h" placeholder="@handle or page name" aria-label="Handle or page name" required><button class="btn ghost">Add page</button></form>
+  <div class="acts"><a class="btn ghost" href="#/studio" data-act="use">New video</a><a class="btn ghost" href="#/social" data-act="use">Schedule</a><button type="button" class="btn ghost" data-act="edit">Edit</button><button type="button" class="btn ghost danger" data-act="del">Delete</button></div></div>`;
+const brandForm = (b = {}) => `<form class="panel bform" id="bf" data-id="${b.id || ""}"><h2>${b.id ? "Edit brand" : "Add a brand"}</h2><p class="muted">Any niche, any language. Pages come next.</p>
+  <div class="grid g2" style="margin-top:12px">
+    <label>Name<input class="field" name="name" required value="${esc(b.name)}" placeholder="e.g. GlowDesk"></label>
+    <label>Niche<input class="field" name="niche" list="niches" required value="${esc(b.niche)}" placeholder="Pick or type your own"></label>
+    <label>Language<input class="field" name="lang" value="${esc(b.lang)}" placeholder="e.g. English, Bengali"></label>
+    <label>What it's about<input class="field" name="lane" value="${esc(b.lane)}" placeholder="One line, e.g. Skincare on a budget"></label>
+  </div><datalist id="niches">${NICHES.map((n) => `<option value="${n}">`).join("")}</datalist>
+  <div class="acts" style="margin-top:14px"><button class="btn">${b.id ? "Save changes" : "Add brand"}</button><button type="button" class="btn ghost" data-act="cancel">Cancel</button></div></form>`;
 const tide = (n, seed = 1) => `<div class="tide">${Array.from({ length: n }, (_, i) =>
   `<i style="height:${25 + ((i * 37 * seed + 13) % 70)}%;animation-delay:${i * 28}ms"></i>`).join("")}</div>`;
 const wave = () => `<span class="wave">${Array.from({ length: 22 }, (_, i) => `<i style="--h:${4 + ((i * 53 + 7) % 18)}px;--i:${i}"></i>`).join("")}</span>`;
@@ -101,31 +137,32 @@ const V = {
       <a class="feature" href="#/studio"><div class="shot a1"><span class="medusa inv" style="--s:78%;position:absolute;left:11%;top:-6%"><i class="art"></i></span></div><h2>Studio<span class="badge">New</span></h2><p>Raw file or script in, finished cut out</p></a>
       <a class="feature" href="#/editor"><div class="shot a2"></div><h2>Editor</h2><p>Pin a note to any frame, get a new version</p></a>
       <a class="feature" href="#/war"><div class="shot a3"></div><h2>War room</h2><p>Server, pipeline and spend on one screen</p></a>
-      <a class="feature" href="#/brands"><div class="shot a4"></div><h2>Brands</h2><p>Ten voices that never sound alike</p></a>
+      <a class="feature" href="#/brands"><div class="shot a4"></div><h2>Brands</h2><p>Any niche, any number of pages</p></a>
     </div>
     <div class="promo-row">
       <section class="promo"><div class="frame">${medusa("act")}</div>
-        <div class="copy"><h1>Ten brands.<br>One engine.<br><span class="y">Yours to approve.</span></h1>
-        <p class="lead">Meduza writes, voices, cuts and packages. Nothing goes out until you say so.</p>
+        <div class="copy"><h1>Any niche.<br>Every page.<br><span class="y">Yours to approve.</span></h1>
+        <p class="lead">Meduza writes, voices, cuts and packages for every brand you run, on every platform. Nothing goes out until you say so.</p>
         <a class="btn" href="#/studio">Start a new cut</a></div></section>
       <div class="hub">${GROUPS.map(([g, d, items]) => `<section class="hubc"><h2>${g}</h2><p class="muted">${d}</p>
         <div class="hubl">${items.map(([id, t, s]) => `<a href="#/${id}">${ico(id)}<span><b>${t}</b><small>${s}</small></span></a>`).join("")}</div></section>`).join("")}</div>
     </div>
     <div class="grid g4" style="margin-bottom:14px">
-      ${[["10", "brands"], ["30", "long-form this month"], ["300", "reels this month"], ["7.40", "dollars spent of 20"]].map(([n, l], i) =>
+      ${[[WS.brands.length, "brands"], [pageCount(), "pages"], [new Set(WS.brands.flatMap((b) => b.pages.map(([p]) => p))).size, "platforms"], [new Set(WS.brands.map((b) => b.niche.toLowerCase())).size, "niches"]].map(([n, l], i) =>
         `<div class="panel stat"><b class="num" data-count="${n}">${n}</b><span class="muted">${l}</span><div style="margin-top:14px">${tide(18, i + 1)}</div></div>`).join("")}
     </div>
     <div class="grid split">
-      <div class="panel"><h2>Tonight's queue</h2><p class="muted">Five items waiting on the engine or on you.</p>${rows(QUEUE)}</div>
-      <div class="panel"><h2>Waiting for your eye</h2><p class="muted">Two flagged by the fact-check.</p>
-        <div class="row"><div class="grow"><div class="title">A rate has no official source</div><small>MoneyAaj, scene 4</small></div><a class="btn ghost" href="#/editor">Review</a></div>
-        <div class="row"><div class="grow"><div class="title">Reads as advice, not explanation</div><small>RupeeLogic, title</small></div><a class="btn ghost" href="#/editor">Review</a></div>
+      <div class="panel"><div class="ph"><div><h2>Tonight's queue</h2><p class="muted">Waiting on the engine or on you.</p></div>${picker()}</div>${rows(mine(QUEUE)) || empty("Nothing queued for " + esc(curName()) + " yet.")}</div>
+      <div class="panel"><h2>Waiting for your eye</h2><p class="muted">Flagged before anything goes out.</p>
+        ${mine(REVIEW).filter((r) => r[3]).map(([t, id, , why]) => `<div class="row"><div class="grow"><div class="title">${why}</div><small>${esc(B(id).name)}, ${esc(t)}</small></div><a class="btn ghost" href="#/review">Review</a></div>`).join("") || '<p class="muted" style="margin-top:12px">Nothing flagged.</p>'}
       </div></div>`,
 
   studio: () => `
     <div class="head"><div><h1>Make something worth watching.</h1><p class="lead">A few choices, then the engine takes over.</p></div></div>
     <div class="steps">
-      <div class="step done"><span class="n">1</span><div class="panel"><h2>Name your video</h2><p class="muted">You can change it later.</p><input class="field" value="Emergency fund explainer"></div></div>
+      <div class="step done"><span class="n">1</span><div class="panel"><h2>Name your video</h2><p class="muted">You can change it later.</p><input class="field" value="${esc(mine(QUEUE)[0]?.[0] || "My first video")}" aria-label="Video name">
+        <h2 style="margin-top:18px">Where it goes</h2><p class="muted">Pick the brand, then the pages that should get it.</p>
+        ${WS.brands.length ? `<select class="field" id="sb" aria-label="Brand">${WS.brands.map((b) => `<option value="${b.id}"${b.id === WS.cur ? " selected" : ""}>${esc(b.name)}</option>`).join("")}</select><div class="socs" id="sp" style="margin-top:12px"></div>` : empty("Add a brand first, then pick its pages here.")}</div></div>
       <div class="step"><span class="n">2</span><div class="panel"><h2>Give it something to work with</h2><p class="muted">Start from footage you shot, or from a script the engine writes.</p>
         ${seg("src", ["Raw footage", "Meduza script"])}
         <div class="grid g2" style="margin-top:14px"><div class="drop"><b>Drop raw footage</b><span>or choose a file</span></div><div class="drop"><b>B-roll and photos</b><span>optional</span></div></div></div></div>
@@ -147,7 +184,7 @@ const V = {
     </div>`,
 
   editor: () => `
-    <div class="head"><div><h2>Emergency fund explainer</h2><p class="muted">TakaTalk, reel, version 2</p></div><span class="chip cutting" id="work"><i class="dot sting"></i>Working for 3m 17s</span></div>
+    <div class="head"><div><h2>${esc(mine(QUEUE)[0]?.[0] || "My first video")}</h2><p class="muted">${esc(B(mine(QUEUE)[0]?.[1])?.name || WS.brands[0]?.name || "Your brand")}, reel, version 2</p></div><span class="chip cutting" id="work"><i class="dot sting"></i>Working for 3m 17s</span></div>
     <div class="grid split">
       <div class="stage"><div class="top"><div class="device"><div class="screen" id="screen"><span class="cap">মাসে <em>৩ হাজার</em> টাকা জমালে</span></div></div>
         <ul class="layers"><li class="live">Footage</li><li class="live">Cuts</li><li class="live">Captions</li><li>Graphics</li><li>Colour and sound</li></ul></div>
@@ -162,15 +199,16 @@ const V = {
         <div id="notes"><div class="note"><time>0:07.03</time><span>Hold the figure a beat longer</span></div></div></div>
     </div>`,
 
-  videos: () => `
-    <div class="head"><div><h1>My videos</h1><p class="lead">Everything the engine has finished, newest first.</p></div>${seg("vf", ["All", "Long-form", "Reels", "In review"])}</div>
-    <div class="masonry">${Array.from({ length: 12 }, (_, i) => { const q = QUEUE[i % 5], b = brand(q[1]), tall = i % 3 !== 0;
-      return `<a class="tile" href="#/editor" style="--a:${b[3]}55;--b:${b[4]};--ar:${tall ? "9/14" : "16/10"}"><span class="chip ${q[4]}">${q[5]}</span><b>${q[0]}</b><small class="muted">${q[1]}, ${q[3]}</small></a>`; }).join("")}</div>`,
+  videos: () => { const q = mine(QUEUE); return `
+    <div class="head"><div><h1>Library</h1><p class="lead">Everything the engine has finished, newest first.</p></div><div class="hctl">${picker()}${seg("vf", ["All", "Long-form", "Reels", "In review"])}</div></div>
+    ${q.length ? `<div class="masonry">${Array.from({ length: Math.max(q.length, 8) }, (_, i) => { const it = q[i % q.length], b = B(it[1]), tall = i % 3 !== 0;
+      return `<a class="tile" href="#/editor" style="--a:${col(b)[0]}55;--b:${col(b)[1]};--ar:${tall ? "9/14" : "16/10"}"><span class="chip ${it[4]}">${it[5]}</span><b>${esc(it[0])}</b><small class="muted">${esc(b.name)}, ${it[3]}</small></a>`; }).join("")}</div>` : empty("No finished videos for " + esc(curName()) + " yet.")}`; },
 
   ideas: () => `
-    <div class="head"><div><h1>Content ideas</h1><p class="lead">Topics the research stage found, with the reason each might land.</p></div><button class="btn" data-toast="Research queued for tonight">Find more</button></div>
-    <div class="grid g3">${[["বেতনের প্রথম দিনে কী করবেন", "TakaTalk", "Salary week starts in 4 days"], ["क्रेडिट कार्ड का न्यूनतम भुगतान", "PaisaPoint", "Asked 212 times in comments"], ["Festival bonus: save or spend?", "KharchaClub", "Festival season, 3 weeks out"], ["মোবাইল ওয়ালেটের খরচ", "TakaTori", "A rival's video on this held 71%"], ["टैक्स बचाने की आखिरी तारीख", "MoneyAaj", "Deadline in 23 days"], ["মূল্যস্ফীতি মানে কী", "ArthoKotha", "New official figures out"]].map(([t, b, why]) =>
-      `<div class="panel"><span class="chip" style="color:${brand(b)[3]}">${b}</span><h2 style="margin:14px 0 8px;line-height:1.25">${t}</h2><p class="muted">${why}</p><button class="btn ghost" style="margin-top:16px" data-toast="Added to the queue">Send to queue</button></div>`).join("")}</div>`,
+    <div class="head"><div><h1>Content ideas</h1><p class="lead">Topics the research stage found for each brand, with the reason each might land.</p></div><div class="hctl">${picker()}<button class="btn" data-toast="Research queued for tonight">Find more</button></div></div>
+    ${mine(IDEAS).length ? `<div class="grid g3">${mine(IDEAS).map(([t, id, why]) =>
+      `<div class="panel"><span class="chip" style="color:${col(B(id))[0]}">${esc(B(id).name)} · ${esc(B(id).niche)}</span><h2 style="margin:14px 0 8px;line-height:1.25">${esc(t)}</h2><p class="muted">${why}</p><button class="btn ghost" style="margin-top:16px" data-toast="Added to the queue">Send to queue</button></div>`).join("")}</div>`
+      : empty("No ideas for " + esc(curName()) + " yet. Research fills this once the brand's pages are connected to the engine.")}`,
 
   analytics: () => `
     <div class="head"><div><h1>Analytics</h1><p class="lead">How long people stay, and where they leave.</p></div>${seg("ar", ["7 days", "28 days", "90 days"], 1)}</div>
@@ -179,26 +217,28 @@ const V = {
       <div class="panel"><h2>Hooks that held</h2><p class="muted">Share of viewers past three seconds.</p>
       ${[["A number first", 78], ["A question", 71], ["A small story", 66], ["A warning", 52]].map(([n, v]) => `<div style="margin-top:14px"><div style="display:flex;justify-content:space-between"><span>${n}</span><b class="num">${v}%</b></div><div class="meter" style="margin-top:6px"><i style="--v:${v}%"></i></div></div>`).join("")}</div></div>`,
 
-  brands: () => `
-    <div class="head"><div><h1>Brands</h1><p class="lead">Ten voices that must never sound alike, and the pages each one runs.</p></div></div>
-    <div class="grid g2">${BRANDS.map(([n, lang, lane, a, b], i) => `<div class="panel bcard">
-      <span class="swatch" style="width:64px;height:64px;border-radius:18px;background:linear-gradient(150deg,${a},${b})"></span>
-      <div><h2>${n}</h2><p class="muted">${lang}. ${lane}.</p></div><div style="width:110px">${tide(12, i + 2)}<small class="muted">this week</small></div>
-      <div class="socs">${SOC.filter(([, all]) => all || lang === "Bengali").map(([p], k) => `<span class="soc"><b>${p}</b><span>${((((i * 37 + k * 53) % 90) + 10) / 10).toFixed(1)}k</span></span>`).join("")}</div>
-      <div class="acts"><a class="btn ghost" href="#/studio">New video</a><a class="btn ghost" href="#/social">Schedule</a><a class="btn ghost" href="#/videos">Library</a></div></div>`).join("")}</div>`,
+  brands: () => { const niches = [...new Set(WS.brands.map((b) => b.niche))];
+    return `
+    <div class="head"><div><h1>Brands</h1><p class="lead">Every brand you run, in any niche, with all of its pages on every platform.</p></div><button class="btn" data-act="new">Add brand</button></div>
+    ${WS.sample ? `<div class="panel note-bar"><span>This is a sample workspace so you can see how it works. Your brands are saved in this browser.</span><button class="btn ghost" data-act="fresh">Start empty</button></div>` : ""}
+    <div id="bfh"></div>
+    ${niches.length > 1 ? `<div class="chips" id="nf"><button class="chip on" data-n="">All niches</button>${niches.map((n) => `<button class="chip" data-n="${esc(n)}">${esc(n)}</button>`).join("")}</div>` : ""}
+    <div class="grid g2" id="bl">${WS.brands.map(brandCard).join("") || `<div class="emptyc"><p>No brands yet. Add your first one: any niche, any language.</p><button class="btn" data-act="new">Add brand</button> <button class="btn ghost" data-act="sample">Load the sample</button></div>`}</div>`; },
 
-  social: () => `
-    <div class="head"><div><h1>Schedule</h1><p class="lead">What's scheduled where. Amber slots are waiting on approval.</p></div><a class="btn ghost" href="#/review">Open review</a></div>
-    <div class="accts">${[["Instagram", 10], ["Facebook", 10], ["YouTube", 10], ["TikTok", 4, "Bangladesh brands only"]].map(([p, n, note]) => `<div class="panel"><span class="muted">${p}</span><b class="num">${n}</b><small class="muted">${note || "pages connected"}</small></div>`).join("")}</div>
+  social: () => { const pl = byPlatform();
+    return `
+    <div class="head"><div><h1>Schedule</h1><p class="lead">What's scheduled where. Amber slots are waiting on approval.</p></div><div class="hctl">${picker()}<a class="btn ghost" href="#/review">Open review</a></div></div>
+    ${pl.length ? `<div class="accts">${pl.map(([p, n]) => `<div class="panel"><span class="muted">${esc(p)}</span><b class="num">${n}</b><small class="muted">${n === 1 ? "page" : "pages"} connected</small></div>`).join("")}</div>
     <div class="panel"><div class="slots"><span></span>${["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => `<span>${d}</span>`).join("")}
-      ${["YouTube", "Instagram", "Facebook", "LinkedIn", "TikTok"].map((p, r) => `<span style="color:var(--ink)">${p}</span>${Array.from({ length: 7 }, (_, c) => `<i class="${(r * 3 + c * 5) % 7 < 4 ? "f" : (r + c) % 5 === 0 ? "h" : ""}"></i>`).join("")}`).join("")}</div>
-      <p class="muted" style="margin-top:16px">TikTok is posted by hand. Meduza prepares the file, caption and time.</p></div>`,
+      ${pl.slice(0, 8).map(([p], r) => `<span style="color:var(--ink)">${esc(p)}</span>${Array.from({ length: 7 }, (_, c) => `<i class="${(r * 3 + c * 5) % 7 < 4 ? "f" : (r + c) % 5 === 0 ? "h" : ""}"></i>`).join("")}`).join("")}</div>
+      <p class="muted" style="margin-top:16px">Where a platform has no posting API, Meduza prepares the file, caption and time for you to upload.</p></div>`
+      : empty("No pages connected for " + esc(curName()) + " yet. Add pages to a brand to schedule posts.")}`; },
 
   review: () => `
-    <div class="head"><div><h1>Review</h1><p class="lead">Nothing goes out until you approve it. Flagged items come first.</p></div></div>
-    <div class="panel" id="rq">${REVIEW.map(([t, b, k, why]) => `<div class="row"><span class="swatch" style="background:linear-gradient(150deg,${brand(b)[3]},${brand(b)[4]})"></span>
-      <div class="grow"><div class="title">${t}</div><small>${b}, ${k.toLowerCase()}${why ? ` · <span class="y">${why}</span>` : ""}</small></div>
-      <a class="btn ghost" href="#/editor">Open</a><button class="btn" data-ok>Approve</button></div>`).join("")}</div>`,
+    <div class="head"><div><h1>Review</h1><p class="lead">Nothing goes out until you approve it. Flagged items come first.</p></div>${picker()}</div>
+    <div class="panel" id="rq">${mine(REVIEW).map(([t, id, k, why]) => `<div class="row">${sw(B(id))}
+      <div class="grow"><div class="title">${esc(t)}</div><small>${esc(B(id).name)}, ${k.toLowerCase()}${why ? ` · <span class="y">${why}</span>` : ""}</small></div>
+      <a class="btn ghost" href="#/editor">Open</a><button class="btn" data-ok>Approve</button></div>`).join("") || '<p class="muted">All caught up. Nothing waiting on you.</p>'}</div>`,
 
   war: () => `
     <div class="head"><div><h1>War room</h1><p class="lead">The server, the pipeline and the money, on one screen.</p></div>
@@ -234,7 +274,7 @@ function celebrate() {
   const bubs = Array.from({ length: 14 }, (_, i) => `<i class="bub" style="left:${4 + ((i * 61) % 84)}%;top:${12 + ((i * 37) % 52)}%;--d:${22 + ((i * 13) % 30)}px;--t:${(1.2 + (i * .17) % 1.9).toFixed(2)}s"></i>`).join("");
   const d = document.createElement("div"); d.className = "finish";
   d.innerHTML = `<div class="card" role="dialog" aria-label="Video ready"><div class="bubbles">${bubs}</div>${medusa("kiss")}
-    <h2>Your video is ready</h2><p>Version 3 of Emergency fund explainer.</p>
+    <h2>Your video is ready</h2><p>Version 3 of ${esc(mine(QUEUE)[0]?.[0] || "your video")}.</p>
     <div class="btns"><button class="btn" data-x>Watch it</button><a class="btn ghost" href="#/studio" data-x>Make another</a></div></div>`;
   d.onclick = (e) => { if (e.target === d || e.target.closest("[data-x]")) d.remove(); };
   document.body.append(d); $(".btn", d).focus();
@@ -242,11 +282,40 @@ function celebrate() {
   if (calm) mood(m, "hearts"); else { setTimeout(() => mood(m, "wink"), 250); setTimeout(() => mood(m, "hearts"), 1150); }
 }
 const HOOKS = {
+  brands: () => {
+    const host = $("main"), list = () => { $("#bl").innerHTML = WS.brands.map(brandCard).join(""); };
+    const commit = () => { WS.sample = false; save(); go(); };
+    const form = (b) => { $("#bfh").innerHTML = brandForm(b); $("#bf [name=name]").focus(); $("#bf").scrollIntoView({ block: "nearest" }); };
+    host.onclick = (e) => {
+      const t = e.target.closest("[data-act]"); if (!t) return; const act = t.dataset.act, card = t.closest("[data-b]"), b = card && B(card.dataset.b);
+      if (act === "new") form();
+      else if (act === "edit") form(b);
+      else if (act === "cancel") $("#bfh").innerHTML = "";
+      else if (act === "use") { WS.cur = b.id; save(); }
+      else if (act === "rm-page") { b.pages.splice(+t.dataset.i, 1); commit(); }
+      else if (act === "del") { if (t.dataset.sure) { WS.brands = WS.brands.filter((x) => x !== b); if (WS.cur === b.id) WS.cur = "all"; commit(); toast("Brand deleted"); }
+        else { t.dataset.sure = "1"; t.textContent = "Tap again to delete"; setTimeout(() => { if (t.isConnected) { delete t.dataset.sure; t.textContent = "Delete"; } }, 3000); } }
+      else if (act === "fresh") { WS = { sample: false, cur: "all", brands: [] }; save(); go(); }
+      else if (act === "sample") { WS = SAMPLE(); save(); go(); }
+    };
+    host.onsubmit = (e) => {
+      e.preventDefault(); const f = e.target, v = (n) => f.elements[n]?.value.trim() || "";
+      if (f.id === "bf") {
+        const old = B(f.dataset.id), data = { name: v("name"), niche: v("niche"), lang: v("lang"), lane: v("lane") };
+        if (old) Object.assign(old, data); else WS.brands.push({ id: "b" + Date.now().toString(36), c: WS.brands.length % SWATCH.length, pages: [], ...data });
+        commit(); toast(old ? "Brand saved" : "Brand added. Now add its pages.");
+      } else if (f.dataset.act === "add-page") { B(f.closest("[data-b]").dataset.b).pages.push([v("p"), v("h")]); commit(); }
+    };
+    $("#nf")?.addEventListener("click", (e) => { const c = e.target.closest("[data-n]"); if (!c) return; $$("#nf .chip").forEach((x) => x.classList.toggle("on", x === c));
+      $$("#bl [data-b]").forEach((card) => { card.hidden = !!c.dataset.n && B(card.dataset.b).niche !== c.dataset.n; }); });
+  },
   review: () => {
     $("#rq").onclick = (e) => { const b = e.target.closest("[data-ok]"); if (!b) return; b.closest(".row").remove(); toast("Approved. It goes out in the next open slot.");
       if (!$("#rq .row")) $("#rq").innerHTML = '<p class="muted">All caught up. Nothing waiting on you.</p>'; };
   },
   studio: () => {
+    const sb = $("#sb"), fill = () => { const b = B(sb.value); $("#sp").innerHTML = b.pages.map(([p, h], i) => `<label class="soc pick"><input type="checkbox" checked> <b>${esc(p)}</b><span>${esc(h)}</span></label>`).join("") || '<span class="muted">This brand has no pages yet. Add them on the Brands page.</span>'; };
+    if (sb) { sb.onchange = fill; fill(); }
     $("#make").onclick = () => sessionStorage.setItem("meduzaFresh", "1");
     $("[data-scan]").onclick = () => { const box = $("#scan"), li = $$(".scan li"); box.hidden = false; let p = 0; li.forEach((l) => l.classList.remove("ok"));
       const id = setInterval(() => { p = Math.min(100, p + 3); $("#pct").textContent = p + "%"; $("#bar").style.setProperty("--v", p + "%"); li.forEach((l, i) => l.classList.toggle("ok", p >= (i + 1) * 14)); if (p === 100) clearInterval(id); }, 90); stop = () => clearInterval(id); };
@@ -277,6 +346,7 @@ function go() {
   main.innerHTML = V[id](); main.style.animation = "none"; void main.offsetWidth; main.style.animation = "";
   $$("#nav a").forEach((a) => a.classList.toggle("on", a.dataset.id === id));
   scrollTo(0, 0); segs(); counts(); act(); HOOKS[id]?.();
+  $$("[data-pick]").forEach((s) => (s.onchange = () => { WS.cur = s.value; save(); go(); }));
   $$("[data-link]").forEach((a) => { const u = LINKS[a.dataset.link]; if (u) { a.href = u; a.target = "_blank"; a.rel = "noopener"; } else a.onclick = () => toast("No address set for this yet"); });
   $$("[data-toast]").forEach((b) => (b.onclick = () => toast(b.dataset.toast)));
 }
