@@ -1,10 +1,136 @@
 @import "tailwindcss";
 
 @theme {
-  --color-paper: #f3f4f6;
-  --color-ink: #17181b;
-  --color-card: #ffffff;
-  --color-line: #e5e7eb;
-  --color-muted: #6b7280;
-  --color-blue: #2f6bff;
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --color-paper: #0a0a0a;
+  --color-card: #111111;
+  --color-ink: #ffffff;
+  --color-muted: #a0a0a0;
+  --color-line: #222222;
+  --color-blue: #22c55e;
+  --color-blue-ink: #ecfdf5;
+  --color-fog: #1a1a1a;
+  --color-stage: #050505;
+  --color-stage-2: #0f0f0f;
+  --color-good: #22c55e;
+  --color-butter: #86efac;
+  --radius-card: 1.15rem;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  html,
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+  }
+
+  h1, h2, h3, h4 {
+    background: linear-gradient(135deg, #ffffff 0%, #22c55e 50%, #16a34a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 700;
+  }
+}
+
+.panel {
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.panel:hover {
+  border-color: #22c55e44;
+  box-shadow: 0 0 20px #22c55e11;
+}
+
+.step-no {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 #22c55e22; }
+  50% { box-shadow: 0 0 16px 2px #22c55e33; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out both;
+}
+
+.logo-glow {
+  filter: drop-shadow(0 0 8px #22c55e55);
+  transition: filter 0.3s ease;
+}
+
+.logo-glow:hover {
+  filter: drop-shadow(0 0 14px #22c55eaa);
+}
+
+.nav-item {
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.nav-item:hover {
+  transform: translateX(4px);
+  background: #1a1a1a;
+}
+
+.nav-item.active {
+  background: #111111;
+  box-shadow: inset 3px 0 0 #22c55e;
+}
+
+.btn-reactive {
+  transition: all 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-reactive:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px #22c55e33;
+}
+
+.btn-reactive:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px #22c55e22;
+}
+
+.card-reactive {
+  transition: all 0.25s ease;
+}
+
+.card-reactive:hover {
+  transform: translateY(-2px);
+  border-color: #22c55e66;
+  box-shadow: 0 8px 24px #00000066, 0 0 0 1px #22c55e22;
+}
+
+.status-dot {
+  transition: all 0.3s ease;
+}
+
+.status-dot.working {
+  animation: glow-pulse 1.5s ease-in-out infinite;
 }
