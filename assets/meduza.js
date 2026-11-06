@@ -52,7 +52,25 @@ const rows = (list) => list.map(([t, b, k, d, s, l]) => `
 const tide = (n, seed = 1) => `<div class="tide">${Array.from({ length: n }, (_, i) =>
   `<i style="height:${25 + ((i * 37 * seed + 13) % 70)}%;animation-delay:${i * 28}ms"></i>`).join("")}</div>`;
 const wave = () => `<span class="wave">${Array.from({ length: 22 }, (_, i) => `<i style="--h:${4 + ((i * 53 + 7) % 18)}px;--i:${i}"></i>`).join("")}</span>`;
-const medusa = (k) => `<span class="medusa ${k}"><i class="art"></i><i class="lid l"></i><i class="lid r"></i></span>`;
+let fxn = 0;
+// Drawn over the art in the image's own 640-unit space: eyes that can roll, a hand, breath, a vein mark and a kiss.
+const fx = () => { const n = ++fxn; const finger = (x, y, a, L) => `<g transform="translate(${x} ${y}) rotate(${a})"><rect x="-6.5" y="${-L}" width="13" height="${L + 12}" rx="6.5"/><path class="nail" d="M-4.6,${9 - L} Q-5.5,${-L - 5} 0,${-L - 11} Q5.5,${-L - 5} 4.6,${9 - L} Z"/></g>`;
+  return `<svg class="fx" viewBox="0 0 640 640" aria-hidden="true">
+  <defs><clipPath id="eR${n}"><path d="M296,339 C305,333 314,330.5 322,330.2 L340,330.3 C345,330.6 349,330.4 351,330 C346,332.5 340,334.5 335,335.6 C330,337.6 324,339.4 318,339.4 C310,339.5 302,339.6 296,339 Z"/></clipPath>
+  <clipPath id="eL${n}"><path d="M221,358.6 C224,355.5 229,353.2 233,352.4 C238,351.2 245,350.3 251.5,349.8 C251,352 248,355.5 244,357.6 C240,359.6 234,361 229,360.9 C226,360.6 223,359.8 221,358.6 Z"/></clipPath></defs>
+  <g clip-path="url(#eR${n})"><rect class="white" x="290" y="322" width="66" height="22"/><g class="iris"><circle cx="326" cy="330" r="9"/><circle class="pupil" cx="326" cy="329.5" r="4"/></g></g>
+  <g clip-path="url(#eL${n})"><rect class="white" x="216" y="344" width="40" height="20"/><g class="iris"><circle cx="242.5" cy="351" r="8"/><circle class="pupil" cx="242.5" cy="350.5" r="3.5"/></g></g>
+  <g transform="translate(296 286)"><path class="vein" d="M-8,-3 q5,0 5,-5 M3,-8 q0,5 5,5 M8,3 q-5,0 -5,5 M-3,8 q0,-5 -5,-5"/></g>
+  <circle class="sigh" cx="262" cy="438" r="6"/>
+  <g transform="translate(378 592) rotate(-12) scale(1.2)"><g class="hand">
+    <g transform="translate(-30 -30) rotate(-48)"><rect x="-7" y="-40" width="14" height="52" rx="7"/><path class="nail" d="M-4.8,-32 Q-5.8,-45 0,-51 Q5.8,-45 4.8,-32 Z"/></g>
+    ${finger(-21, -62, -9, 50)}${finger(-7, -66, -3, 58)}${finger(7, -64, 4, 52)}${finger(20, -58, 12, 40)}
+    <path d="M-30,-66 Q-35,-30 -22,0 L-20,70 L22,70 L24,0 Q35,-30 29,-62 Q0,-74 -30,-66 Z"/>
+    <path class="spark" d="M4,-150 L7,-141 L16,-138 L7,-135 L4,-126 L1,-135 L-8,-138 L1,-141 Z"/>
+  </g></g>
+  <g class="puff"><path d="M292,426 q16,-2 28,6"/><path d="M291,434 q14,2 24,12"/><path d="M287,441 q10,6 16,18"/></g>
+  <path class="heart" d="M0,6 C-9,-2 -5,-9 0,-4 C5,-9 9,-2 0,6 Z"/></svg>`; };
+const medusa = (k) => `<span class="medusa ${k}"><i class="art"></i>${/act|kiss/.test(k) ? fx() : ""}<i class="lid l"></i><i class="lid r"></i></span>`;
 const seg = (id, items, on = 0) => `<div class="seg" data-seg="${id}"><span class="pill"></span>${items.map((t, i) => `<button class="${i === on ? "on" : ""}">${t}</button>`).join("")}</div>`;
 const ring = (v, label, text, c = "var(--yellow)") => `<div class="vital"><svg class="ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/><circle class="v" cx="50" cy="50" r="40" style="--v:${v};--c:${c}"/></svg><div><b class="num">${text}</b><span class="muted">${label}</span></div></div>`;
 
@@ -77,7 +95,7 @@ const V = {
       <a class="feature" href="#/brands"><div class="shot a4"></div><h2>Brands</h2><p>Ten voices that never sound alike</p></a>
     </div>
     <div class="promo-row">
-      <section class="promo"><div class="frame">${medusa("")}</div>
+      <section class="promo"><div class="frame">${medusa("act")}</div>
         <div class="copy"><h1>Ten brands.<br>One engine.<br><span class="y">Yours to approve.</span></h1>
         <p class="lead">Meduza writes, voices, cuts and packages. Nothing goes out until you say so.</p>
         <a class="btn" href="#/studio">Start a new cut</a></div></section>
@@ -116,11 +134,11 @@ const V = {
       <div class="step"><span class="n">6</span><div class="panel"><h2>Anything it should know?</h2><p class="muted">Optional. Mention a moment if it matters.</p>
         <textarea class="field" placeholder="Keep the pace natural. At 0:12, show the savings chart. End on the question, not on a call to action."></textarea></div></div>
       <div class="step"><span class="n">7</span><div><div class="panel" style="display:flex;gap:10px;align-items:center;margin-bottom:14px"><input class="field" placeholder="Save these choices as a preset, e.g. Calm and clear"><button class="btn ghost" data-toast="Preset saved">Save</button></div>
-        <a class="btn wide" href="#/editor">Make my video</a></div></div>
+        <a class="btn wide" id="make" href="#/editor">Make my video</a></div></div>
     </div>`,
 
   editor: () => `
-    <div class="head"><div><h2>Emergency fund explainer</h2><p class="muted">TakaTalk, reel, version 2</p></div><span class="chip cutting"><i class="dot sting"></i>Working for 3m 17s</span></div>
+    <div class="head"><div><h2>Emergency fund explainer</h2><p class="muted">TakaTalk, reel, version 2</p></div><span class="chip cutting" id="work"><i class="dot sting"></i>Working for 3m 17s</span></div>
     <div class="grid split">
       <div class="stage"><div class="top"><div class="device"><div class="screen" id="screen"><span class="cap">মাসে <em>৩ হাজার</em> টাকা জমালে</span></div></div>
         <ul class="layers"><li class="live">Footage</li><li class="live">Cuts</li><li class="live">Captions</li><li>Graphics</li><li>Colour and sound</li></ul></div>
@@ -131,7 +149,7 @@ const V = {
       <div class="panel"><div style="display:flex;justify-content:space-between;align-items:baseline"><span class="tc num" id="tc">0:10.50</span><span class="muted num" id="fr">Frame 315</span></div>
         <p class="muted" style="margin:6px 0 14px">Drag the timeline to a moment, then say what should change.</p>
         <textarea class="field" id="fb" style="height:84px" placeholder="What should change here?"></textarea>
-        <div style="display:flex;gap:10px;margin-top:10px"><button class="btn ghost" id="add">Add note</button><button class="btn" data-toast="Version 3 queued">Update the video</button></div>
+        <div style="display:flex;gap:10px;margin-top:10px"><button class="btn ghost" id="add">Add note</button><button class="btn" id="render">Update the video</button></div>
         <div id="notes"><div class="note"><time>0:07.03</time><span>Hold the figure a beat longer</span></div></div></div>
     </div>`,
 
@@ -192,8 +210,20 @@ function counts() {
     const tick = (now) => { const k = Math.min(1, (now - t0) / 800), e = 1 - Math.pow(1 - k, 3); el.textContent = (end * e).toFixed(dec); if (k < 1) requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
 }
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2200); }
+// Video finished: she winks, blows a kiss, and heart bubbles rise and pop.
+function celebrate() {
+  $(".done")?.remove();
+  const bubs = Array.from({ length: 14 }, (_, i) => `<i class="bub" style="left:${4 + ((i * 61) % 84)}%;top:${12 + ((i * 37) % 52)}%;--d:${22 + ((i * 13) % 30)}px;--t:${(1.2 + (i * .17) % 1.9).toFixed(2)}s"></i>`).join("");
+  const d = document.createElement("div"); d.className = "done";
+  d.innerHTML = `<div class="card" role="dialog" aria-label="Video ready"><div class="bubbles">${bubs}</div>${medusa("kiss")}
+    <h2>Your video is ready</h2><p>Version 3 of Emergency fund explainer.</p>
+    <div class="btns"><button class="btn" data-x>Watch it</button><a class="btn ghost" href="#/studio" data-x>Make another</a></div></div>`;
+  d.onclick = (e) => { if (e.target === d || e.target.closest("[data-x]")) d.remove(); };
+  document.body.append(d); $(".btn", d).focus();
+}
 const HOOKS = {
   studio: () => {
+    $("#make").onclick = () => sessionStorage.setItem("meduzaFresh", "1");
     $("[data-scan]").onclick = () => { const box = $("#scan"), li = $$(".scan li"); box.hidden = false; let p = 0; li.forEach((l) => l.classList.remove("ok"));
       const id = setInterval(() => { p = Math.min(100, p + 3); $("#pct").textContent = p + "%"; $("#bar").style.setProperty("--v", p + "%"); li.forEach((l, i) => l.classList.toggle("ok", p >= (i + 1) * 14)); if (p === 100) clearInterval(id); }, 90); stop = () => clearInterval(id); };
     $("#looks").onclick = (e) => { const l = e.target.closest(".look"); if (l) $$(".look").forEach((o) => o.classList.toggle("on", o === l)); };
@@ -207,13 +237,18 @@ const HOOKS = {
     const play = () => { if (!drag) set(p >= 1 ? 0 : p + .0009); raf = requestAnimationFrame(play); }; set(p); if (!calm) play();
     $("#add").onclick = () => { const f = $("#fb"); if (!f.value.trim()) return f.focus(); const n = document.createElement("div"); n.className = "note";
       n.innerHTML = `<time>${$("#tc").textContent}</time><span></span>`; n.lastChild.textContent = f.value.trim(); $("#notes").prepend(n); f.value = ""; };
-    stop = () => cancelAnimationFrame(raf);
+    let timer; const work = $("#work");
+    const render = () => { clearTimeout(timer); work.className = "chip cutting"; work.innerHTML = '<i class="dot sting"></i>Rendering version 3';
+      timer = setTimeout(() => { work.className = "chip ready"; work.textContent = "Version 3 ready"; celebrate(); }, 2200); };
+    $("#render").onclick = render;
+    if (sessionStorage.getItem("meduzaFresh")) { sessionStorage.removeItem("meduzaFresh"); render(); }
+    stop = () => { cancelAnimationFrame(raf); clearTimeout(timer); };
   },
 };
 
 // ---------- shell ----------
 function go() {
-  stop(); stop = () => {};
+  stop(); stop = () => {}; $(".done")?.remove();
   const id = V[location.hash.slice(2)] ? location.hash.slice(2) : "home", main = $("main");
   main.innerHTML = V[id](); main.style.animation = "none"; void main.offsetWidth; main.style.animation = "";
   $$("#nav a").forEach((a) => a.classList.toggle("on", a.dataset.id === id));
