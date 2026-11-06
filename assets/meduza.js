@@ -20,10 +20,23 @@ const icons = {
   brands: "M4 21V7l8-4 8 4v14M9 21v-6h6v6M9 10h.01M15 10h.01",
   social: "M18 8a3 3 0 1 0-2.8-4M6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4",
   war: "M12 3 4 6v6c0 5 3.4 8 8 9 4.6-1 8-4 8-9V6zM12 8v5M12 16h.01",
+  review: "M9 12l2 2 4-4M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
 };
 const ico = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="${icons[n]}"/></svg>`;
-const NAV = [["home", "Home"], ["studio", "Studio"], ["editor", "Editor"], ["videos", "My videos"], null,
-  ["ideas", "Content ideas"], ["analytics", "Analytics"], ["brands", "Brands"], ["social", "Social"], null, ["war", "War room"]];
+// Every page, grouped by what you are doing. Drives the sidebar and the home page.
+const GROUPS = [
+  ["Create", "Make videos from footage or a script.", [["studio", "New video", "A few choices, then the engine takes over"], ["editor", "Editor", "Pin a note to any moment"]]],
+  ["Curate", "Pick what to make. Approve what goes out.", [["ideas", "Ideas", "Topics pulled from what is working"], ["review", "Review", "Approve or send back"], ["videos", "Library", "Everything finished"]]],
+  ["Brands and socials", "Every brand, its pages and its schedule.", [["brands", "Brands", "Ten voices and their pages"], ["social", "Schedule", "What posts where, and when"], ["analytics", "Analytics", "Where viewers stay or leave"]]],
+  ["Run", "Server, pipeline and spend.", [["war", "War room", "Health and money on one screen"]]],
+];
+const SOC = [["Instagram", 1], ["Facebook", 1], ["YouTube", 1], ["TikTok", 0]]; // TikTok only for Bangladesh brands: it is banned in India
+const REVIEW = [
+  ["SIP शुरू करने से पहले ये जान लें", "MoneyAaj", "Reel", "A rate has no official source"],
+  ["EMI का असली खर्च", "RupeeLogic", "Reel", "Title reads as advice, not explanation"],
+  ["জরুরি তহবিল: কত টাকা যথেষ্ট?", "TakaTalk", "Long-form", ""],
+  ["সঞ্চয়পত্রের মুনাফা কীভাবে হিসাব হয়", "SonchoyGhor", "Reel", ""],
+];
 
 const BRANDS = [
   ["TakaTalk", "Bengali", "First salary, first savings", "#ffd400", "#0f4a4a"],
@@ -95,8 +108,8 @@ const V = {
         <div class="copy"><h1>Ten brands.<br>One engine.<br><span class="y">Yours to approve.</span></h1>
         <p class="lead">Meduza writes, voices, cuts and packages. Nothing goes out until you say so.</p>
         <a class="btn" href="#/studio">Start a new cut</a></div></section>
-      <div class="tiles">${[["studio", "Studio", "Seven choices, then the engine takes over"], ["editor", "Editor", "Drag to a moment and say what to change"], ["ideas", "Content ideas", "Topics pulled from what is working"], ["analytics", "Analytics", "Where viewers stay and where they leave"], ["social", "Social", "What is scheduled where"], ["war", "War room", "Server, pipeline and spend"]].map(([id, t, d]) =>
-        `<a class="ftile" href="#/${id}">${ico(id)}<span><b>${t}</b><small>${d}</small></span></a>`).join("")}</div>
+      <div class="hub">${GROUPS.map(([g, d, items]) => `<section class="hubc"><h2>${g}</h2><p class="muted">${d}</p>
+        <div class="hubl">${items.map(([id, t, s]) => `<a href="#/${id}">${ico(id)}<span><b>${t}</b><small>${s}</small></span></a>`).join("")}</div></section>`).join("")}</div>
     </div>
     <div class="grid g4" style="margin-bottom:14px">
       ${[["10", "brands"], ["30", "long-form this month"], ["300", "reels this month"], ["7.40", "dollars spent of 20"]].map(([n, l], i) =>
@@ -167,16 +180,25 @@ const V = {
       ${[["A number first", 78], ["A question", 71], ["A small story", 66], ["A warning", 52]].map(([n, v]) => `<div style="margin-top:14px"><div style="display:flex;justify-content:space-between"><span>${n}</span><b class="num">${v}%</b></div><div class="meter" style="margin-top:6px"><i style="--v:${v}%"></i></div></div>`).join("")}</div></div>`,
 
   brands: () => `
-    <div class="head"><div><h1>Brands</h1><p class="lead">Ten voices that must never sound alike.</p></div></div>
-    <div class="grid g2">${BRANDS.map(([n, lang, lane, a, b], i) => `<div class="panel" style="display:grid;grid-template-columns:64px 1fr auto;gap:16px;align-items:center">
+    <div class="head"><div><h1>Brands</h1><p class="lead">Ten voices that must never sound alike, and the pages each one runs.</p></div></div>
+    <div class="grid g2">${BRANDS.map(([n, lang, lane, a, b], i) => `<div class="panel bcard">
       <span class="swatch" style="width:64px;height:64px;border-radius:18px;background:linear-gradient(150deg,${a},${b})"></span>
-      <div><h2>${n}</h2><p class="muted">${lang}. ${lane}.</p></div><div style="width:110px">${tide(12, i + 2)}<small class="muted">this week</small></div></div>`).join("")}</div>`,
+      <div><h2>${n}</h2><p class="muted">${lang}. ${lane}.</p></div><div style="width:110px">${tide(12, i + 2)}<small class="muted">this week</small></div>
+      <div class="socs">${SOC.filter(([, all]) => all || lang === "Bengali").map(([p], k) => `<span class="soc"><b>${p}</b><span>${((((i * 37 + k * 53) % 90) + 10) / 10).toFixed(1)}k</span></span>`).join("")}</div>
+      <div class="acts"><a class="btn ghost" href="#/studio">New video</a><a class="btn ghost" href="#/social">Schedule</a><a class="btn ghost" href="#/videos">Library</a></div></div>`).join("")}</div>`,
 
   social: () => `
-    <div class="head"><div><h1>Social</h1><p class="lead">What's scheduled where. Amber slots are waiting on approval.</p></div></div>
+    <div class="head"><div><h1>Schedule</h1><p class="lead">What's scheduled where. Amber slots are waiting on approval.</p></div><a class="btn ghost" href="#/review">Open review</a></div>
+    <div class="accts">${[["Instagram", 10], ["Facebook", 10], ["YouTube", 10], ["TikTok", 4, "Bangladesh brands only"]].map(([p, n, note]) => `<div class="panel"><span class="muted">${p}</span><b class="num">${n}</b><small class="muted">${note || "pages connected"}</small></div>`).join("")}</div>
     <div class="panel"><div class="slots"><span></span>${["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => `<span>${d}</span>`).join("")}
       ${["YouTube", "Instagram", "Facebook", "LinkedIn", "TikTok"].map((p, r) => `<span style="color:var(--ink)">${p}</span>${Array.from({ length: 7 }, (_, c) => `<i class="${(r * 3 + c * 5) % 7 < 4 ? "f" : (r + c) % 5 === 0 ? "h" : ""}"></i>`).join("")}`).join("")}</div>
       <p class="muted" style="margin-top:16px">TikTok is posted by hand. Meduza prepares the file, caption and time.</p></div>`,
+
+  review: () => `
+    <div class="head"><div><h1>Review</h1><p class="lead">Nothing goes out until you approve it. Flagged items come first.</p></div></div>
+    <div class="panel" id="rq">${REVIEW.map(([t, b, k, why]) => `<div class="row"><span class="swatch" style="background:linear-gradient(150deg,${brand(b)[3]},${brand(b)[4]})"></span>
+      <div class="grow"><div class="title">${t}</div><small>${b}, ${k.toLowerCase()}${why ? ` · <span class="y">${why}</span>` : ""}</small></div>
+      <a class="btn ghost" href="#/editor">Open</a><button class="btn" data-ok>Approve</button></div>`).join("")}</div>`,
 
   war: () => `
     <div class="head"><div><h1>War room</h1><p class="lead">The server, the pipeline and the money, on one screen.</p></div>
@@ -208,9 +230,9 @@ function counts() {
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2200); }
 // Video finished: she winks, blows a kiss, and heart bubbles rise and pop.
 function celebrate() {
-  $(".done")?.remove();
+  $(".finish")?.remove();
   const bubs = Array.from({ length: 14 }, (_, i) => `<i class="bub" style="left:${4 + ((i * 61) % 84)}%;top:${12 + ((i * 37) % 52)}%;--d:${22 + ((i * 13) % 30)}px;--t:${(1.2 + (i * .17) % 1.9).toFixed(2)}s"></i>`).join("");
-  const d = document.createElement("div"); d.className = "done";
+  const d = document.createElement("div"); d.className = "finish";
   d.innerHTML = `<div class="card" role="dialog" aria-label="Video ready"><div class="bubbles">${bubs}</div>${medusa("kiss")}
     <h2>Your video is ready</h2><p>Version 3 of Emergency fund explainer.</p>
     <div class="btns"><button class="btn" data-x>Watch it</button><a class="btn ghost" href="#/studio" data-x>Make another</a></div></div>`;
@@ -220,6 +242,10 @@ function celebrate() {
   if (calm) mood(m, "hearts"); else { setTimeout(() => mood(m, "wink"), 250); setTimeout(() => mood(m, "hearts"), 1150); }
 }
 const HOOKS = {
+  review: () => {
+    $("#rq").onclick = (e) => { const b = e.target.closest("[data-ok]"); if (!b) return; b.closest(".row").remove(); toast("Approved. It goes out in the next open slot.");
+      if (!$("#rq .row")) $("#rq").innerHTML = '<p class="muted">All caught up. Nothing waiting on you.</p>'; };
+  },
   studio: () => {
     $("#make").onclick = () => sessionStorage.setItem("meduzaFresh", "1");
     $("[data-scan]").onclick = () => { const box = $("#scan"), li = $$(".scan li"); box.hidden = false; let p = 0; li.forEach((l) => l.classList.remove("ok"));
@@ -246,7 +272,7 @@ const HOOKS = {
 
 // ---------- shell ----------
 function go() {
-  stop(); stop = () => {}; $(".done")?.remove();
+  stop(); stop = () => {}; $(".finish")?.remove(); setMenu(false);
   const id = V[location.hash.slice(2)] ? location.hash.slice(2) : "home", main = $("main");
   main.innerHTML = V[id](); main.style.animation = "none"; void main.offsetWidth; main.style.animation = "";
   $$("#nav a").forEach((a) => a.classList.toggle("on", a.dataset.id === id));
@@ -254,7 +280,12 @@ function go() {
   $$("[data-link]").forEach((a) => { const u = LINKS[a.dataset.link]; if (u) { a.href = u; a.target = "_blank"; a.rel = "noopener"; } else a.onclick = () => toast("No address set for this yet"); });
   $$("[data-toast]").forEach((b) => (b.onclick = () => toast(b.dataset.toast)));
 }
-$("#nav").innerHTML = NAV.filter(Boolean).map((n) => `<a href="#/${n[0]}" data-id="${n[0]}">${n[1]}</a>`).join("");
+$("#nav").innerHTML = `<div class="ng"><a href="#/home" data-id="home">${ico("home")}Home</a></div>` + GROUPS.map(([g, , items]) =>
+  `<div class="ng"><small>${g}</small>${items.map(([id, t]) => `<a href="#/${id}" data-id="${id}">${ico(id)}${t}</a>`).join("")}</div>`).join("");
+function setMenu(open) { document.body.classList.toggle("menu-open", open); $("#menu").setAttribute("aria-expanded", String(open)); $("#scrim").hidden = !open; if (open) $("#nav a.on, #nav a")?.focus(); }
+$("#menu").onclick = () => setMenu(!document.body.classList.contains("menu-open"));
+$("#scrim").onclick = () => setMenu(false);
+addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("menu-open")) { setMenu(false); $("#menu").focus(); } });
 $("#motion").textContent = calm ? "Motion off" : "Motion on";
 $("#motion").onclick = () => { localStorage.setItem("meduzaMotion", calm ? "on" : "off"); location.reload(); };
 addEventListener("pointermove", (e) => { document.body.style.setProperty("--mx", e.clientX + "px"); document.body.style.setProperty("--my", e.clientY + "px"); });
