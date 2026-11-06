@@ -6,8 +6,8 @@ const LINKS = {
 };
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-// Motion is on by default because this is the owner's own tool; the switch in the rail turns it off and is remembered.
-const calm = localStorage.getItem("meduzaMotion") === "off";
+// Motion is on by default because this is the owner's own tool; the switch in the top bar turns it off and is remembered.
+const calm = localStorage.getItem("meduzaMotion") === "off" || location.search.includes("still"); // ?still freezes motion for screenshots
 document.documentElement.classList.toggle("calm", calm);
 
 const icons = {
@@ -26,7 +26,7 @@ const NAV = [["home", "Home"], ["studio", "Studio"], ["editor", "Editor"], ["vid
   ["ideas", "Content ideas"], ["analytics", "Analytics"], ["brands", "Brands"], ["social", "Social"], null, ["war", "War room"]];
 
 const BRANDS = [
-  ["TakaTalk", "Bengali", "First salary, first savings", "#7cf5d4", "#0f4a4a"],
+  ["TakaTalk", "Bengali", "First salary, first savings", "#ffd400", "#0f4a4a"],
   ["MoneyAaj", "Hindi", "Daily money news, explained", "#f2c14e", "#4a3410"],
   ["RupeeLogic", "Hindi", "The maths behind money choices", "#8fb8ff", "#132a55"],
   ["NiveshPath", "Hindi", "Long-term investing basics", "#c6a4ff", "#2c1a55"],
@@ -52,16 +52,17 @@ const rows = (list) => list.map(([t, b, k, d, s, l]) => `
 const tide = (n, seed = 1) => `<div class="tide">${Array.from({ length: n }, (_, i) =>
   `<i style="height:${25 + ((i * 37 * seed + 13) % 70)}%;animation-delay:${i * 28}ms"></i>`).join("")}</div>`;
 const wave = () => `<span class="wave">${Array.from({ length: 22 }, (_, i) => `<i style="--h:${4 + ((i * 53 + 7) % 18)}px;--i:${i}"></i>`).join("")}</span>`;
+const medusa = (k) => `<span class="medusa ${k}"><i class="art"></i><i class="lid l"></i><i class="lid r"></i></span>`;
 const seg = (id, items, on = 0) => `<div class="seg" data-seg="${id}"><span class="pill"></span>${items.map((t, i) => `<button class="${i === on ? "on" : ""}">${t}</button>`).join("")}</div>`;
-const ring = (v, label, text, c = "var(--lumen)") => `<div class="vital"><svg class="ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/><circle class="v" cx="50" cy="50" r="40" style="--v:${v};--c:${c}"/></svg><div><b class="num">${text}</b><span class="muted">${label}</span></div></div>`;
+const ring = (v, label, text, c = "var(--yellow)") => `<div class="vital"><svg class="ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/><circle class="v" cx="50" cy="50" r="40" style="--v:${v};--c:${c}"/></svg><div><b class="num">${text}</b><span class="muted">${label}</span></div></div>`;
 
 const LOOKS = {
-  "Overall style": [["Still water", "Slow, calm, one idea at a time", "#17485a", "#06131a"], ["Riptide", "Fast cuts, big figures", "#5a1733", "#12060c"], ["Lantern", "Warm, close, story-led", "#5a4217", "#120d06"], ["Ledger", "Charts first, voice second", "#173a5a", "#060d1a"], ["Paper boat", "Light, playful, hand-drawn", "#2f5a17", "#0a1206"]],
+  "Overall style": [["Still water", "Slow, calm, one idea at a time", "#3a3d42", "#0a0a0b"], ["Riptide", "Fast cuts, big figures", "#5a1733", "#12060c"], ["Lantern", "Warm, close, story-led", "#5a4217", "#120d06"], ["Ledger", "Charts first, voice second", "#173a5a", "#060d1a"], ["Paper boat", "Light, playful, hand-drawn", "#2f5a17", "#0a1206"]],
   Captions: [["Whisper", "Small, under a pinned title"], ["Headline", "One bold line at a time"], ["Sing-along", "Each word lights as it's said"], ["Ticker", "Runs along the bottom edge"]],
   Effects: [["Card drop", "The frame shrinks into a card"], ["Word wall", "Giant words march behind"], ["Number rise", "Figures count up in place"], ["Split tide", "Before and after, side by side"], ["Side notes", "Small labels point at details"], ["Breath", "A slow push on key lines"]],
-  Colour: [["Original", "As rendered", "#17485a", "#06131a"], ["Deep sea", "Cool and saturated", "#0d3d6a", "#030a1a"], ["Lamp", "Warm evening light", "#6a4a1d", "#1a1006"], ["Newsprint", "Muted, low contrast", "#4a5258", "#14181a"]],
+  Colour: [["Original", "As rendered", "#3a3d42", "#0a0a0b"], ["Deep sea", "Cool and saturated", "#0d3d6a", "#030a1a"], ["Lamp", "Warm evening light", "#6a4a1d", "#1a1006"], ["Newsprint", "Muted, low contrast", "#4a5258", "#14181a"]],
 };
-const looks = (tab) => LOOKS[tab].map(([n, d, a = "#17485a", b = "#06131a"], i) => `
+const looks = (tab) => LOOKS[tab].map(([n, d, a = "#2a2c30", b = "#0a0a0b"], i) => `
   <button class="look ${i === 0 ? "on" : ""}"><div class="phone" style="--a:${a};--b:${b}">
   <span class="bar" style="top:${22 + i * 6}%;--w:${46 + i * 9}%;animation-delay:${i * .3}s"></span>
   <span class="bar" style="top:${30 + i * 6}%;--w:${30 + i * 7}%;animation-delay:${i * .3 + .25}s"></span>
@@ -69,12 +70,21 @@ const looks = (tab) => LOOKS[tab].map(([n, d, a = "#17485a", b = "#06131a"], i) 
 
 const V = {
   home: () => `
-    <section class="hero"><canvas id="jelly" aria-hidden="true"></canvas>
-      <div class="copy"><span class="chip cutting"><i class="dot sting"></i>Cutting 1 of 5 tonight</span>
-      <h1 style="margin-top:18px">Ten brands. One engine. Every cut, yours to approve.</h1>
-      <p class="lead">Meduza writes, voices, cuts and packages. Nothing goes out until you say so.</p>
-      <a class="btn" href="#/studio">Start a new cut</a></div></section>
-    <div class="grid g4" style="margin-bottom:16px">
+    <div class="reel">
+      <a class="feature" href="#/studio"><div class="shot a1"><span class="medusa inv" style="--s:78%;position:absolute;left:11%;top:-6%"><i class="art"></i><i class="lid l"></i><i class="lid r"></i></span></div><h2>Studio<span class="badge">New</span></h2><p>Raw file or script in, finished cut out</p></a>
+      <a class="feature" href="#/editor"><div class="shot a2"></div><h2>Editor</h2><p>Pin a note to any frame, get a new version</p></a>
+      <a class="feature" href="#/war"><div class="shot a3"></div><h2>War room</h2><p>Server, pipeline and spend on one screen</p></a>
+      <a class="feature" href="#/brands"><div class="shot a4"></div><h2>Brands</h2><p>Ten voices that never sound alike</p></a>
+    </div>
+    <div class="promo-row">
+      <section class="promo"><div class="frame">${medusa("")}</div>
+        <div class="copy"><h1>Ten brands.<br>One engine.<br><span class="y">Yours to approve.</span></h1>
+        <p class="lead">Meduza writes, voices, cuts and packages. Nothing goes out until you say so.</p>
+        <a class="btn" href="#/studio">Start a new cut</a></div></section>
+      <div class="tiles">${[["studio", "Studio", "Seven choices, then the engine takes over"], ["editor", "Editor", "Drag to a moment and say what to change"], ["ideas", "Content ideas", "Topics pulled from what is working"], ["analytics", "Analytics", "Where viewers stay and where they leave"], ["social", "Social", "What is scheduled where"], ["war", "War room", "Server, pipeline and spend"]].map(([id, t, d]) =>
+        `<a class="ftile" href="#/${id}">${ico(id)}<span><b>${t}</b><small>${d}</small></span></a>`).join("")}</div>
+    </div>
+    <div class="grid g4" style="margin-bottom:14px">
       ${[["10", "brands"], ["30", "long-form this month"], ["300", "reels this month"], ["7.40", "dollars spent of 20"]].map(([n, l], i) =>
         `<div class="panel stat"><b class="num" data-count="${n}">${n}</b><span class="muted">${l}</span><div style="margin-top:14px">${tide(18, i + 1)}</div></div>`).join("")}
     </div>
@@ -115,7 +125,7 @@ const V = {
       <div class="stage"><div class="top"><div class="device"><div class="screen" id="screen"><span class="cap">মাসে <em>৩ হাজার</em> টাকা জমালে</span></div></div>
         <ul class="layers"><li class="live">Footage</li><li class="live">Cuts</li><li class="live">Captions</li><li>Graphics</li><li>Colour and sound</li></ul></div>
         <div class="timeline" id="tl">
-          ${[["Footage", [[0, 22], [23, 30], [54, 46]], "#2a6a7e"], ["Captions", [[4, 14], [20, 26], [50, 18], [72, 22]], "#7cf5d4"], ["Graphics", [[30, 12], [62, 16]], "#f2c14e"], ["B-roll", [[12, 10], [44, 9], [80, 12]], "#3a5a8a"], ["Sound", [[0, 100]], "#1d3d4a"]].map(([n, c, col]) =>
+          ${[["Footage", [[0, 22], [23, 30], [54, 46]], "#4a4e55"], ["Captions", [[4, 14], [20, 26], [50, 18], [72, 22]], "#ffd400"], ["Graphics", [[30, 12], [62, 16]], "#f7f7f8"], ["B-roll", [[12, 10], [44, 9], [80, 12]], "#8b8f97"], ["Sound", [[0, 100]], "#2a2c30"]].map(([n, c, col]) =>
             `<div class="lane"><span>${n}</span><div class="track">${c.map(([l, w]) => `<i class="clip" style="left:${l}%;width:${w}%;--c:${col}"></i>`).join("")}</div></div>`).join("")}
           <span class="playhead" id="ph"></span></div></div>
       <div class="panel"><div style="display:flex;justify-content:space-between;align-items:baseline"><span class="tc num" id="tc">0:10.50</span><span class="muted num" id="fr">Frame 315</span></div>
@@ -151,13 +161,13 @@ const V = {
   social: () => `
     <div class="head"><div><h1>Social</h1><p class="lead">What's scheduled where. Amber slots are waiting on approval.</p></div></div>
     <div class="panel"><div class="slots"><span></span>${["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => `<span>${d}</span>`).join("")}
-      ${["YouTube", "Instagram", "Facebook", "LinkedIn", "TikTok"].map((p, r) => `<span style="color:var(--pearl)">${p}</span>${Array.from({ length: 7 }, (_, c) => `<i class="${(r * 3 + c * 5) % 7 < 4 ? "f" : (r + c) % 5 === 0 ? "h" : ""}"></i>`).join("")}`).join("")}</div>
+      ${["YouTube", "Instagram", "Facebook", "LinkedIn", "TikTok"].map((p, r) => `<span style="color:var(--ink)">${p}</span>${Array.from({ length: 7 }, (_, c) => `<i class="${(r * 3 + c * 5) % 7 < 4 ? "f" : (r + c) % 5 === 0 ? "h" : ""}"></i>`).join("")}`).join("")}</div>
       <p class="muted" style="margin-top:16px">TikTok is posted by hand. Meduza prepares the file, caption and time.</p></div>`,
 
   war: () => `
     <div class="head"><div><h1>War room</h1><p class="lead">The server, the pipeline and the money, on one screen.</p></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn" data-link="panel">Open control panel</a><a class="btn ghost" data-link="vpsRepo">Server repo</a><a class="btn ghost" data-link="engineRepo">Engine repo</a></div></div>
-    <div class="grid g3" style="margin-bottom:16px"><div class="panel">${ring(.31, "processor, 2 cores", "31%")}</div><div class="panel">${ring(.58, "memory, of 8 GB", "4.6 GB")}</div><div class="panel">${ring(.74, "disk, of 100 GB", "74 GB", "var(--amber)")}</div></div>
+    <div class="grid g3" style="margin-bottom:16px"><div class="panel">${ring(.31, "processor, 2 cores", "31%")}</div><div class="panel">${ring(.58, "memory, of 8 GB", "4.6 GB")}</div><div class="panel">${ring(.74, "disk, of 100 GB", "74 GB", "var(--soft)")}</div></div>
     <div class="panel" style="margin-bottom:16px"><h2>Pipeline</h2><p class="muted">Items at each stage right now.</p>
       <div class="river">${[["Research", 2], ["Evidence", 1], ["Script", 3, "busy"], ["Fact-check", 2, "hot"], ["Voice", 0], ["Render", 1, "busy"], ["Reels", 4], ["Package", 0], ["Approval", 5]].map(([n, c, k = ""]) => `<div class="${k}"><b class="num">${c}</b>${n}</div>`).join("")}</div></div>
     <div class="grid g3">
@@ -171,38 +181,6 @@ const V = {
 
 // ---------- motion ----------
 let stop = () => {};
-function jelly(c) {
-  const x = c.getContext("2d"), tracks = [["Footage", "#7cf5d4"], ["Cuts", "#e8f1ee"], ["Captions", "#f2c14e"], ["Graphics", "#ff5c8a"], ["Sound", "#8ba6ab"]];
-  let w, h, t = 0, px = .5, raf, tx = .5;
-  const size = () => { const r = c.getBoundingClientRect(), d = devicePixelRatio || 1; w = r.width; h = r.height; c.width = w * d; c.height = h * d; x.setTransform(d, 0, 0, d, 0, 0); };
-  const move = (e) => { const r = c.getBoundingClientRect(); tx = (e.clientX - r.left) / r.width; };
-  const onResize = () => { size(); if (calm) draw(); };
-  size(); addEventListener("resize", onResize); addEventListener("pointermove", move);
-  const draw = () => {
-    t += .016; px += (tx - px) * .06; x.clearRect(0, 0, w, h);
-    const narrow = w < 640, bx = w * (narrow ? .5 : .7), by = narrow ? h - 210 : h * .3, R = narrow ? 70 : Math.min(w * .17, h * .3), pulse = 1 + Math.sin(t * 1.5) * .045;
-    const g = x.createRadialGradient(bx, by, 0, bx, by, R * 2.4); g.addColorStop(0, "rgba(124,245,212,.28)"); g.addColorStop(1, "rgba(124,245,212,0)");
-    x.fillStyle = g; x.fillRect(0, 0, w, h);
-    x.lineCap = "round"; x.font = "500 12px 'Instrument Sans', sans-serif";
-    tracks.forEach(([name, col], i) => {
-      let X = bx - R * .78 + i * (R * 1.56 / 4), Y = by + 2; const L = (h - by) / 30, pts = [[X, Y]];
-      for (let j = 1; j < 30; j++) { const k = j / 30, a = Math.PI / 2 + Math.sin(t * 1.1 + j * .3 + i * 1.4) * .22 * k * 1.5 - (px - X / w) * 1.1 * k; X += Math.cos(a) * L; Y += Math.sin(a) * L; pts.push([X, Y]); }
-      x.strokeStyle = col; x.globalAlpha = .35; x.lineWidth = 1.5; x.beginPath(); pts.forEach(([a, b], j) => j ? x.lineTo(a, b) : x.moveTo(a, b)); x.stroke();
-      x.globalAlpha = .9; x.lineWidth = 7;
-      for (let j = 2; j < 27; j++) if ((((j - Math.floor(t * 3) + i * 4) % 9) + 9) % 9 < 3) { x.beginPath(); x.moveTo(...pts[j]); x.lineTo(...pts[j + 1]); x.stroke(); }
-      x.globalAlpha = 1;
-    });
-    const rx = R * pulse, sc = rx / 2;
-    x.beginPath(); x.ellipse(bx, by, rx, R * .78 / pulse, 0, Math.PI, 0);
-    for (let k = 0; k < 4; k++) x.quadraticCurveTo(bx + rx - sc * (k + .5), by + R * .14, bx + rx - sc * (k + 1), by);
-    x.closePath();
-    const b = x.createLinearGradient(bx, by - R, bx, by); b.addColorStop(0, "rgba(232,241,238,.5)"); b.addColorStop(1, "rgba(124,245,212,.12)");
-    x.fillStyle = b; x.fill(); x.strokeStyle = "#7cf5d4"; x.lineWidth = 1.5; x.stroke();
-    if (!calm) raf = requestAnimationFrame(draw);
-  };
-  draw();
-  return () => { cancelAnimationFrame(raf); removeEventListener("resize", onResize); removeEventListener("pointermove", move); };
-}
 function segs() {
   $$(".seg").forEach((s) => { const pill = $(".pill", s), place = () => { const b = $("button.on", s); pill.style.width = b.offsetWidth + "px"; pill.style.transform = `translateX(${b.offsetLeft}px)`; };
     place(); s.onclick = (e) => { const b = e.target.closest("button"); if (!b) return; $$("button", s).forEach((o) => o.classList.toggle("on", o === b)); place();
@@ -215,7 +193,6 @@ function counts() {
 }
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2200); }
 const HOOKS = {
-  home: () => { stop = jelly($("#jelly")); },
   studio: () => {
     $("[data-scan]").onclick = () => { const box = $("#scan"), li = $$(".scan li"); box.hidden = false; let p = 0; li.forEach((l) => l.classList.remove("ok"));
       const id = setInterval(() => { p = Math.min(100, p + 3); $("#pct").textContent = p + "%"; $("#bar").style.setProperty("--v", p + "%"); li.forEach((l, i) => l.classList.toggle("ok", p >= (i + 1) * 14)); if (p === 100) clearInterval(id); }, 90); stop = () => clearInterval(id); };
@@ -239,15 +216,13 @@ function go() {
   stop(); stop = () => {};
   const id = V[location.hash.slice(2)] ? location.hash.slice(2) : "home", main = $("main");
   main.innerHTML = V[id](); main.style.animation = "none"; void main.offsetWidth; main.style.animation = "";
-  $$(".rail nav a").forEach((a) => a.classList.toggle("on", a.dataset.id === id));
-  const on = $(".rail nav a.on"); if (on) $(".rail .glow").style.transform = `translateY(${on.offsetTop}px)`;
-  $(".rail").classList.remove("open"); scrollTo(0, 0); segs(); counts(); HOOKS[id]?.();
+  $$("#nav a").forEach((a) => a.classList.toggle("on", a.dataset.id === id));
+  scrollTo(0, 0); segs(); counts(); HOOKS[id]?.();
   $$("[data-link]").forEach((a) => { const u = LINKS[a.dataset.link]; if (u) { a.href = u; a.target = "_blank"; a.rel = "noopener"; } else a.onclick = () => toast("No address set for this yet"); });
   $$("[data-toast]").forEach((b) => (b.onclick = () => toast(b.dataset.toast)));
 }
-$("#nav").innerHTML = '<span class="glow"></span>' + NAV.map((n) => n ? `<a href="#/${n[0]}" data-id="${n[0]}">${ico(n[0])}${n[1]}</a>` : '<span class="sep"></span>').join("");
-$("#menu").onclick = () => $(".rail").classList.toggle("open");
-$("#motion").textContent = calm ? "Turn motion on" : "Turn motion off";
+$("#nav").innerHTML = NAV.filter(Boolean).map((n) => `<a href="#/${n[0]}" data-id="${n[0]}">${n[1]}</a>`).join("");
+$("#motion").textContent = calm ? "Motion off" : "Motion on";
 $("#motion").onclick = () => { localStorage.setItem("meduzaMotion", calm ? "on" : "off"); location.reload(); };
 addEventListener("pointermove", (e) => { document.body.style.setProperty("--mx", e.clientX + "px"); document.body.style.setProperty("--my", e.clientY + "px"); });
 addEventListener("hashchange", go); document.fonts?.ready.then(go); go();

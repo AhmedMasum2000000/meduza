@@ -3,28 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#06131a" />
+  <meta name="theme-color" content="#0a0a0b" />
   <title>Meduza Studio</title>
+  <link rel="icon" href="assets/medusa-face.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Instrument+Sans:wght@400..700&family=Hind+Siliguri:wght@400;500;600;700&family=Hind:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Hind+Siliguri:wght@400;500;600;700&family=Hind:wght@400;500;600;700&display=swap" />
   <link rel="stylesheet" href="assets/meduza.css" />
 </head>
 <body>
-  <aside class="rail">
-    <a class="mark" href="#/home" style="text-decoration:none;color:inherit">
-      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M5 15a11 11 0 0 1 22 0z" fill="#7cf5d4" opacity=".9"/><path d="M8 17c0 4-2 5-1 9M13 17c0 5 2 6 0 11M19 17c0 5-2 6 0 11M24 17c0 4 2 5 1 9" stroke="#7cf5d4" stroke-width="1.8" stroke-linecap="round"/></svg>
-      <span>M<i>e</i>duza</span>
+  <header class="nav">
+    <a class="brand" href="#/home" aria-label="Meduza home">
+      <span class="medusa face"><i class="art"></i><i class="lid l"></i><i class="lid r"></i></span>MEDUZA
     </a>
     <nav id="nav" aria-label="Sections"></nav>
-    <div class="foot">
-      <div class="engine"><i class="dot sting"></i>Engine is cutting</div>
-      Design preview. Sample data.<br />
-      <button id="motion" type="button">Turn motion off</button>
+    <div class="right">
+      <button id="motion" class="motion" type="button">Motion on</button>
+      <span class="pill"><i class="dot"></i>Engine is cutting</span>
+      <a class="btn" href="#/studio" style="height:34px">New cut</a>
     </div>
-  </aside>
-  <header class="topbar"><button id="menu" aria-label="Open menu">Menu</button><b style="font-family:var(--display)">Meduza</b></header>
+  </header>
   <main></main>
+  <footer class="fine">Design preview. Sample data.</footer>
   <div class="toast" id="toast" role="status"></div>
   <script src="assets/meduza.js"></script>
 </body>
