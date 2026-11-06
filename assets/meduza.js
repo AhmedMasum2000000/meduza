@@ -1,4 +1,4 @@
-// Meduza Studio — design preview. Everything on screen is sample data; nothing is wired to the engine yet.
+// Meduza Studio. Starts empty: brands, pages, videos and ideas are the owner's own, saved on their server when connected.
 const LINKS = {
   panel: "", // set to your control panel / war room address
   vpsRepo: "https://github.com/AhmedMasum2000000/hostingervps",
@@ -34,18 +34,11 @@ const GROUPS = [
 const PLATFORMS = ["Instagram", "Facebook", "YouTube", "TikTok", "X", "LinkedIn", "Threads", "Pinterest", "Bluesky", "Snapchat", "Website", "Other"];
 const NICHES = ["Finance", "Beauty", "Fashion", "Fitness", "Food", "Sports", "Music", "Tech", "Gaming", "Education", "Travel", "Parenting", "Local business", "Real estate", "News", "Entertainment"];
 const SWATCH = [["#ffd400", "#0f4a4a"], ["#ff9d6c", "#552413"], ["#8fb8ff", "#132a55"], ["#c6a4ff", "#2c1a55"], ["#ff5c8a", "#521327"], ["#b4f06a", "#2a4a10"], ["#6ce0ff", "#0d3d52"], ["#ffd9a0", "#4a3515"]];
-// Sample workspace: a few brands in different niches, so the tool shows how it works before anyone adds their own.
-const SAMPLE = () => ({ sample: true, cur: "all", brands: [
-  { id: "b1", name: "TakaTalk", niche: "Finance", lang: "Bengali", lane: "First salary, first savings", c: 0, pages: [["Instagram", "@takatalk"], ["Facebook", "TakaTalk"], ["YouTube", "@takatalk"], ["TikTok", "@takatalk.bd"]] },
-  { id: "b2", name: "GlowDesk", niche: "Beauty", lang: "English", lane: "Skincare on a student budget", c: 1, pages: [["Instagram", "@glowdesk"], ["Instagram", "@glowdesk.men"], ["TikTok", "@glowdesk"], ["Pinterest", "glowdesk"]] },
-  { id: "b3", name: "Gully XI", niche: "Sports", lang: "Hindi", lane: "Cricket stats and fan takes", c: 2, pages: [["Instagram", "@gullyxi"], ["Facebook", "Gully XI"], ["YouTube", "@gullyxi"], ["X", "@gullyxi"]] },
-  { id: "b4", name: "Spice Ledger", niche: "Food", lang: "Urdu", lane: "Ten-minute home recipes", c: 5, pages: [["Instagram", "@spiceledger"], ["Facebook", "Spice Ledger"], ["YouTube", "@spiceledger"]] },
-  { id: "b5", name: "Night Shift FM", niche: "Music", lang: "English", lane: "New underground releases", c: 3, pages: [["Instagram", "@nightshift.fm"], ["TikTok", "@nightshiftfm"], ["YouTube", "@nightshiftfm"], ["Threads", "@nightshift.fm"]] },
-  { id: "b6", name: "ByteBhai", niche: "Tech", lang: "Hindi", lane: "Phone and app tips", c: 6, pages: [["YouTube", "@bytebhai"], ["Instagram", "@bytebhai"], ["X", "@bytebhai"], ["LinkedIn", "ByteBhai"]] },
-] });
+const EMPTY = () => ({ cur: "all", brands: [], ideas: [], jobs: [] });
 const KEY = "meduzaWorkspace";
 let WS;
-try { WS = JSON.parse(localStorage.getItem(KEY)) || SAMPLE(); } catch { WS = SAMPLE(); }
+try { WS = JSON.parse(localStorage.getItem(KEY)) || EMPTY(); } catch { WS = EMPTY(); }
+if (WS.sample) WS = EMPTY(); // the old demo workspace is cleared, not kept
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(WS)); } catch {} pushWS(); };
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const B = (id) => WS.brands.find((b) => b.id === id);
@@ -69,7 +62,7 @@ async function connect(quiet) {
   try {
     await api("/api/status"); online = true;
     const w = await api("/api/workspace");
-    if (w.workspace) { WS = w.workspace; try { localStorage.setItem(KEY, JSON.stringify(WS)); } catch {} } else pushWS();
+    if (w.workspace && !w.workspace.sample) { WS = w.workspace; try { localStorage.setItem(KEY, JSON.stringify(WS)); } catch {} } else pushWS();
   } catch (e) { if (!quiet) toast(e.message); }
   srvPill(); return online;
 }
@@ -89,35 +82,19 @@ const krow = (id, name, what) => `<div class="krow" data-k="${id}"><div class="g
   <button type="button" class="btn ghost" data-act="test" hidden>Test</button><button type="button" class="btn ghost danger" data-act="rm" hidden>Remove</button></div>`;
 const col = (b) => SWATCH[(b?.c ?? 0) % SWATCH.length];
 const sw = (b, s = "") => `<span class="swatch" style="${s}background:linear-gradient(150deg,${col(b)[0]},${col(b)[1]})"></span>`;
-// Sample content belongs to sample brands; it disappears with them. Filtered by the brand picker.
-const QUEUE = [
-  ["জরুরি তহবিল: কত টাকা যথেষ্ট?", "b1", "Long-form", "9:42", "ready", "Ready"],
-  ["Sunscreen under 500, tested", "b2", "Reel", "0:41", "review", "In review"],
-  ["इस सीज़न के 5 सबसे तेज़ अर्धशतक", "b3", "Reel", "0:38", "cutting", "Cutting"],
-  ["دس منٹ کی دال", "b4", "Reel", "0:44", "ready", "Ready"],
-  ["Five releases you missed this week", "b5", "Long-form", "8:10", "", "Draft"],
-  ["फ़ोन की बैटरी के 3 झूठ", "b6", "Reel", "0:36", "review", "In review"],
-];
-const REVIEW = [
-  ["Sunscreen under 500, tested", "b2", "Reel", "A product claim has no source"],
-  ["फ़ोन की बैटरी के 3 झूठ", "b6", "Reel", "Title reads as clickbait"],
-  ["জরুরি তহবিল: কত টাকা যথেষ্ট?", "b1", "Long-form", ""],
-  ["دس منٹ کی دال", "b4", "Reel", ""],
-];
-const IDEAS = [
-  ["বেতনের প্রথম দিনে কী করবেন", "b1", "Salary week starts in 4 days"],
-  ["Night routine in 3 steps", "b2", "Saved 1,900 times on a similar page"],
-  ["Death-over economy, explained", "b3", "Final is in 6 days"],
-  ["Iftar in 15 minutes", "b4", "Searches up 3x this week"],
-  ["One beat, four ways", "b5", "Comments keep asking how"],
-  ["UPI scam signs", "b6", "Asked 212 times in comments"],
-];
+// Lists below are filtered by the brand picker.
+// Videos the owner asked for. Each moves queued -> working -> review -> approved -> posted as the engine reports back.
+const LABEL = { queued: "Queued", working: "Working", review: "In review", approved: "Approved", posted: "Posted" };
+const CHIP = { queued: "", working: "cutting", review: "review", approved: "ready", posted: "ready" };
+const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " d ago"; };
+const JOBS = () => (WS.jobs || []).map((x) => [x.t, x.b, x.kind, ago(x.created), CHIP[x.status], LABEL[x.status], x]);
+const job = (id) => (WS.jobs || []).find((x) => x.id === id);
 const mine = (list) => list.filter((x) => B(x[1]) && (WS.cur === "all" || x[1] === WS.cur));
 const curName = () => (WS.cur === "all" ? "all brands" : B(WS.cur)?.name || "all brands");
 const picker = () => `<label class="wpick"><span class="muted">Showing</span><select class="field" data-pick><option value="all">All brands</option>${WS.brands.map((b) => `<option value="${b.id}"${b.id === WS.cur ? " selected" : ""}>${esc(b.name)}</option>`).join("")}</select></label>`;
 const empty = (msg) => `<div class="emptyc"><p>${msg}</p><a class="btn ghost" href="#/brands">Go to Brands</a></div>`;
-const rows = (list) => list.map(([t, id, k, d, s, l]) => `
-  <div class="row">${sw(B(id))}
+const rows = (list) => list.map(([t, id, k, d, s, l, x]) => `
+  <div class="row"${x ? ` data-job="${x.id}"` : ""}>${sw(B(id))}
   <div class="grow"><div class="title">${esc(t)}</div><small>${esc(B(id).name)}, ${k.toLowerCase()}</small></div>
   <span class="num muted">${d}</span><span class="chip ${s}">${s === "cutting" ? '<i class="dot sting"></i>' : ""}${l}</span></div>`).join("");
 const pageCount = () => WS.brands.reduce((n, b) => n + b.pages.length, 0);
@@ -131,7 +108,7 @@ const brandCard = (b) => `<div class="panel bcard" data-b="${b.id}">
   <div class="acts"><a class="btn ghost" href="#/studio" data-act="use">New video</a><a class="btn ghost" href="#/social" data-act="use">Schedule</a><button type="button" class="btn ghost" data-act="edit">Edit</button><button type="button" class="btn ghost danger" data-act="del">Delete</button></div></div>`;
 const brandForm = (b = {}) => `<form class="panel bform" id="bf" data-id="${b.id || ""}"><h2>${b.id ? "Edit brand" : "Add a brand"}</h2><p class="muted">Any niche, any language. Pages come next.</p>
   <div class="grid g2" style="margin-top:12px">
-    <label>Name<input class="field" name="name" required value="${esc(b.name)}" placeholder="e.g. GlowDesk"></label>
+    <label>Name<input class="field" name="name" required value="${esc(b.name)}" placeholder="Your brand name"></label>
     <label>Niche<input class="field" name="niche" list="niches" required value="${esc(b.niche)}" placeholder="Pick or type your own"></label>
     <label>Language<input class="field" name="lang" value="${esc(b.lang)}" placeholder="e.g. English, Bengali"></label>
     <label>What it's about<input class="field" name="lane" value="${esc(b.lane)}" placeholder="One line, e.g. Skincare on a budget"></label>
@@ -188,96 +165,87 @@ const V = {
     </div>
     <div class="grid g4" style="margin-bottom:14px">
       ${[[WS.brands.length, "brands"], [pageCount(), "pages"], [new Set(WS.brands.flatMap((b) => b.pages.map(([p]) => p))).size, "platforms"], [new Set(WS.brands.map((b) => b.niche.toLowerCase())).size, "niches"]].map(([n, l], i) =>
-        `<div class="panel stat"><b class="num" data-count="${n}">${n}</b><span class="muted">${l}</span><div style="margin-top:14px">${tide(18, i + 1)}</div></div>`).join("")}
+        `<div class="panel stat"><b class="num" data-count="${n}">${n}</b><span class="muted">${l}</span></div>`).join("")}
     </div>
     <div class="grid split">
-      <div class="panel"><div class="ph"><div><h2>Tonight's queue</h2><p class="muted">Waiting on the engine or on you.</p></div>${picker()}</div>${rows(mine(QUEUE)) || empty("Nothing queued for " + esc(curName()) + " yet.")}</div>
+      <div class="panel"><div class="ph"><div><h2>Tonight's queue</h2><p class="muted">Waiting on the engine or on you.</p></div>${picker()}</div>${rows(mine(JOBS()).filter((r) => r[6].status !== "posted")) || `<div class="emptyc"><p>Nothing queued for ${esc(curName())}. ${WS.brands.length ? "Make a video in Studio." : "Start by adding your first brand."}</p><a class="btn ghost" href="#/${WS.brands.length ? "studio" : "brands"}">${WS.brands.length ? "New video" : "Add a brand"}</a></div>`}</div>
       <div class="panel"><h2>Waiting for your eye</h2><p class="muted">Flagged before anything goes out.</p>
-        ${mine(REVIEW).filter((r) => r[3]).map(([t, id, , why]) => `<div class="row"><div class="grow"><div class="title">${why}</div><small>${esc(B(id).name)}, ${esc(t)}</small></div><a class="btn ghost" href="#/review">Review</a></div>`).join("") || '<p class="muted" style="margin-top:12px">Nothing flagged.</p>'}
+        ${mine(JOBS()).filter((r) => r[6].status === "review").map(([t, id, , , , , x]) => `<div class="row"><div class="grow"><div class="title">${esc(t)}</div><small>${esc(B(id).name)}${x.flag ? " · " + esc(x.flag) : ""}</small></div><a class="btn ghost" href="#/review">Review</a></div>`).join("") || '<p class="muted" style="margin-top:12px">Nothing waiting on you.</p>'}
       </div></div>`,
 
   studio: () => `
     <div class="head"><div><h1>Make something worth watching.</h1><p class="lead">A few choices, then the engine takes over.</p></div></div>
     <div class="steps">
-      <div class="step done"><span class="n">1</span><div class="panel"><h2>Name your video</h2><p class="muted">You can change it later.</p><input class="field" value="${esc(mine(QUEUE)[0]?.[0] || "My first video")}" aria-label="Video name">
+      <div class="step done"><span class="n">1</span><div class="panel"><h2>Name your video</h2><p class="muted">You can change it later.</p><input class="field" id="vt" placeholder="e.g. Five money habits for a first salary" aria-label="Video name">
+        <div style="margin-top:12px">${seg("kind", ["Reel", "Long-form", "Both"])}</div>
         <h2 style="margin-top:18px">Where it goes</h2><p class="muted">Pick the brand, then the pages that should get it.</p>
         ${WS.brands.length ? `<select class="field" id="sb" aria-label="Brand">${WS.brands.map((b) => `<option value="${b.id}"${b.id === WS.cur ? " selected" : ""}>${esc(b.name)}</option>`).join("")}</select><div class="socs" id="sp" style="margin-top:12px"></div>` : empty("Add a brand first, then pick its pages here.")}</div></div>
       <div class="step"><span class="n">2</span><div class="panel"><h2>Give it something to work with</h2><p class="muted">Start from footage you shot, or from a script the engine writes.</p>
         ${seg("src", ["Raw footage", "Meduza script"])}
-        <div class="grid g2" style="margin-top:14px"><div class="drop"><b>Drop raw footage</b><span>or choose a file</span></div><div class="drop"><b>B-roll and photos</b><span>optional</span></div></div></div></div>
+        <input class="field" id="foot" style="margin-top:14px" placeholder="Link to your footage folder (Google Drive, Dropbox…), optional" aria-label="Footage link"></div></div>
       <div class="step"><span class="n">3</span><div class="panel"><h2>Show it what good looks like</h2><p class="muted">Paste a video you admire. Meduza studies how it's cut.</p>
-        <div style="display:flex;gap:10px"><input class="field" placeholder="Link from YouTube, Instagram or TikTok"><button class="btn" data-scan>Study it</button></div>
-        <div id="scan" hidden style="margin-top:16px"><div style="display:flex;justify-content:space-between"><span>Studying the reference</span><b class="num" id="pct">0%</b></div>
-          <div class="meter" style="margin:8px 0 10px"><i id="bar"></i></div>
-          <ul class="scan">${["Fetching the video", "Speech pace and cuts", "Colour and sound", "Every word on screen", "Text styles and motion", "Typefaces", "Style kit"].map((s) => `<li>${s}</li>`).join("")}</ul></div></div></div>
+        <input class="field" id="ref" placeholder="Link from YouTube, Instagram or TikTok, optional" aria-label="Reference video link"></div></div>
       <div class="step"><span class="n">4</span><div class="panel"><h2>Choose the look</h2><p class="muted">Each tile shows the recipe on the same clip.</p>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">${seg("look", Object.keys(LOOKS))}<label style="display:flex;align-items:center;gap:10px">Captions ${seg("cap", ["On", "Off"])}</label></div>
         <div class="looks" id="looks">${looks("Overall style")}</div></div></div>
-      <div class="step"><span class="n">5</span><div class="panel"><h2>Music</h2><p class="muted">Sits quietly under the voice.</p>${seg("music", ["None", "Auto", "Library", "Upload"], 2)}
-        ${[["Low tide", "Calm, piano", "2:14"], ["Market morning", "Light, percussive", "1:58"], ["Paper lanterns", "Warm, strings", "2:31"]].map(([t, d, l]) =>
-          `<div class="row"><div class="grow"><div class="title">${t}</div><small>${d}</small></div>${wave()}<span class="num muted">${l}</span><button class="btn ghost">Use</button></div>`).join("")}</div></div>
+      <div class="step"><span class="n">5</span><div class="panel"><h2>Music</h2><p class="muted">Sits quietly under the voice.</p>${seg("music", ["None", "Auto", "Royalty-free library"], 1)}</div></div>
       <div class="step"><span class="n">6</span><div class="panel"><h2>Anything it should know?</h2><p class="muted">Optional. Mention a moment if it matters.</p>
-        <textarea class="field" placeholder="Keep the pace natural. At 0:12, show the savings chart. End on the question, not on a call to action."></textarea></div></div>
-      <div class="step"><span class="n">7</span><div><div class="panel" style="display:flex;gap:10px;align-items:center;margin-bottom:14px"><input class="field" placeholder="Save these choices as a preset, e.g. Calm and clear"><button class="btn ghost" data-toast="Preset saved">Save</button></div>
-        <a class="btn wide" id="make" href="#/editor">Make my video</a></div></div>
+        <textarea class="field" id="vn" placeholder="e.g. Keep the pace natural. End on a question, not a sales line."></textarea></div></div>
+      <div class="step"><span class="n">7</span><div><button class="btn wide" id="make" type="button">Make my video</button>
+        <p class="muted" style="margin-top:10px">It joins the queue. The engine picks it up as soon as it is connected to your server.</p></div></div>
     </div>`,
 
-  editor: () => `
-    <div class="head"><div><h2>${esc(mine(QUEUE)[0]?.[0] || "My first video")}</h2><p class="muted">${esc(B(mine(QUEUE)[0]?.[1])?.name || WS.brands[0]?.name || "Your brand")}, reel, version 2</p></div><span class="chip cutting" id="work"><i class="dot sting"></i>Working for 3m 17s</span></div>
-    <div class="grid split">
-      <div class="stage"><div class="top"><div class="device"><div class="screen" id="screen"><span class="cap">মাসে <em>৩ হাজার</em> টাকা জমালে</span></div></div>
-        <ul class="layers"><li class="live">Footage</li><li class="live">Cuts</li><li class="live">Captions</li><li>Graphics</li><li>Colour and sound</li></ul></div>
-        <div class="timeline" id="tl">
-          ${[["Footage", [[0, 22], [23, 30], [54, 46]], "#4a4e55"], ["Captions", [[4, 14], [20, 26], [50, 18], [72, 22]], "#ffd400"], ["Graphics", [[30, 12], [62, 16]], "#f7f7f8"], ["B-roll", [[12, 10], [44, 9], [80, 12]], "#8b8f97"], ["Sound", [[0, 100]], "#2a2c30"]].map(([n, c, col]) =>
-            `<div class="lane"><span>${n}</span><div class="track">${c.map(([l, w]) => `<i class="clip" style="left:${l}%;width:${w}%;--c:${col}"></i>`).join("")}</div></div>`).join("")}
-          <span class="playhead" id="ph"></span></div></div>
-      <div class="panel"><div style="display:flex;justify-content:space-between;align-items:baseline"><span class="tc num" id="tc">0:10.50</span><span class="muted num" id="fr">Frame 315</span></div>
-        <p class="muted" style="margin:6px 0 14px">Drag the timeline to a moment, then say what should change.</p>
-        <textarea class="field" id="fb" style="height:84px" placeholder="What should change here?"></textarea>
-        <div style="display:flex;gap:10px;margin-top:10px"><button class="btn ghost" id="add">Add note</button><button class="btn" id="render">Update the video</button></div>
-        <div id="notes"><div class="note"><time>0:07.03</time><span>Hold the figure a beat longer</span></div></div></div>
-    </div>`,
+  editor: () => { const x = job(sessionStorage.getItem("meduzaJob")) || mine(JOBS())[0]?.[6];
+    if (!x) return `<div class="head"><div><h1>Editor</h1><p class="lead">Open a video to see its details and tell the engine what to change.</p></div></div>${empty("No videos yet. Make one in Studio first.").replace("#/brands", "#/studio").replace("Go to Brands", "New video")}`;
+    const b = B(x.b);
+    return `
+    <div class="head"><div><h1>${esc(x.t)}</h1><p class="lead">${esc(b?.name || "Removed brand")} · ${esc(x.kind)} · made ${ago(x.created)}</p></div><span class="chip ${CHIP[x.status]}">${LABEL[x.status]}</span></div>
+    <div class="grid split" data-jid="${x.id}">
+      <div class="panel"><h2>Details</h2><dl class="kvl">
+        <dt>Goes to</dt><dd>${x.pages.map(([p, h]) => `${esc(p)} ${esc(h)}`).join(", ") || "No pages picked"}</dd>
+        <dt>Start from</dt><dd>${esc(x.src)}${x.foot ? ` · <a href="${esc(x.foot)}" target="_blank" rel="noopener">footage</a>` : ""}</dd>
+        <dt>Reference</dt><dd>${x.ref ? `<a href="${esc(x.ref)}" target="_blank" rel="noopener">${esc(x.ref)}</a>` : "None"}</dd>
+        <dt>Look</dt><dd>${esc(x.look)} · captions ${esc(x.cap)} · music ${esc(x.music)}</dd></dl>
+        <button type="button" class="btn ghost danger" data-act="del-job" style="margin-top:16px">Delete video</button></div>
+      <div class="panel"><h2>Notes for the engine</h2><p class="muted">Say what to change. A time helps, e.g. "At 0:12, hold the chart longer."</p>
+        <textarea class="field" id="jn" style="height:120px">${esc(x.notes)}</textarea>
+        <button type="button" class="btn" data-act="save-notes" style="margin-top:10px">Save notes</button></div>
+    </div>`; },
 
-  videos: () => { const q = mine(QUEUE); return `
-    <div class="head"><div><h1>Library</h1><p class="lead">Everything the engine has finished, newest first.</p></div><div class="hctl">${picker()}${seg("vf", ["All", "Long-form", "Reels", "In review"])}</div></div>
-    ${q.length ? `<div class="masonry">${Array.from({ length: Math.max(q.length, 8) }, (_, i) => { const it = q[i % q.length], b = B(it[1]), tall = i % 3 !== 0;
-      return `<a class="tile" href="#/editor" style="--a:${col(b)[0]}55;--b:${col(b)[1]};--ar:${tall ? "9/14" : "16/10"}"><span class="chip ${it[4]}">${it[5]}</span><b>${esc(it[0])}</b><small class="muted">${esc(b.name)}, ${it[3]}</small></a>`; }).join("")}</div>` : empty("No finished videos for " + esc(curName()) + " yet.")}`; },
+  videos: () => { const q = mine(JOBS()); return `
+    <div class="head"><div><h1>Library</h1><p class="lead">Every video you've made, newest first.</p></div><div class="hctl">${picker()}</div></div>
+    ${q.length ? `<div class="masonry">${q.map((it, i) => { const b = B(it[1]), tall = i % 3 !== 0;
+      return `<a class="tile" href="#/editor" data-job="${it[6].id}" style="--a:${col(b)[0]}55;--b:${col(b)[1]};--ar:${tall ? "9/14" : "16/10"}"><span class="chip ${it[4]}">${it[5]}</span><b>${esc(it[0])}</b><small class="muted">${esc(b.name)}, ${it[3]}</small></a>`; }).join("")}</div>` : empty("No videos for " + esc(curName()) + " yet. Make one in Studio.").replace("#/brands", "#/studio").replace("Go to Brands", "New video")}`; },
 
   ideas: () => `
-    <div class="head"><div><h1>Content ideas</h1><p class="lead">Topics the research stage found for each brand, with the reason each might land.</p></div><div class="hctl">${picker()}<button class="btn" data-find>Find ideas with AI</button></div></div>
-    ${mine([...(WS.ideas || []), ...IDEAS]).length ? `<div class="grid g3">${mine([...(WS.ideas || []), ...IDEAS]).map(([t, id, why]) =>
-      `<div class="panel"><span class="chip" style="color:${col(B(id))[0]}">${esc(B(id).name)} · ${esc(B(id).niche)}</span><h2 style="margin:14px 0 8px;line-height:1.25">${esc(t)}</h2><p class="muted">${why}</p><button class="btn ghost" style="margin-top:16px" data-toast="Added to the queue">Send to queue</button></div>`).join("")}</div>`
-      : empty("No ideas for " + esc(curName()) + " yet. Research fills this once the brand's pages are connected to the engine.")}`,
+    <div class="head"><div><h1>Content ideas</h1><p class="lead">Ideas written by your AI for each brand, with the reason each might land.</p></div><div class="hctl">${picker()}<button class="btn" data-find>Find ideas with AI</button></div></div>
+    ${mine(WS.ideas || []).length ? `<div class="grid g3">${mine(WS.ideas || []).map(([t, id, why]) =>
+      `<div class="panel"><span class="chip" style="color:${col(B(id))[0]}">${esc(B(id).name)} · ${esc(B(id).niche)}</span><h2 style="margin:14px 0 8px;line-height:1.25">${esc(t)}</h2><p class="muted">${why}</p><button class="btn ghost" style="margin-top:16px" data-q="${esc(t)}" data-qb="${id}">Make this video</button></div>`).join("")}</div>`
+      : empty("No ideas for " + esc(curName()) + " yet. Tap Find ideas with AI. It needs your server connected and an AI key in Admin.").replace("#/brands", "#/admin").replace("Go to Brands", "Open Admin")}`,
 
   analytics: () => `
-    <div class="head"><div><h1>Analytics</h1><p class="lead">How long people stay, and where they leave.</p></div>${seg("ar", ["7 days", "28 days", "90 days"], 1)}</div>
-    <div class="grid split"><div class="panel"><h2>Viewers still watching</h2><p class="muted">Average across all reels. The dip at 0:06 is the hook handing over.</p>
-      <svg class="curve" viewBox="0 0 600 220" style="width:100%"><path class="area" d="M0 20 C60 30 90 90 140 96 S260 110 340 128 S480 150 600 176 V220 H0z"/><path d="M0 20 C60 30 90 90 140 96 S260 110 340 128 S480 150 600 176"/></svg></div>
-      <div class="panel"><h2>Hooks that held</h2><p class="muted">Share of viewers past three seconds.</p>
-      ${[["A number first", 78], ["A question", 71], ["A small story", 66], ["A warning", 52]].map(([n, v]) => `<div style="margin-top:14px"><div style="display:flex;justify-content:space-between"><span>${n}</span><b class="num">${v}%</b></div><div class="meter" style="margin-top:6px"><i style="--v:${v}%"></i></div></div>`).join("")}</div></div>`,
+    <div class="head"><div><h1>Analytics</h1><p class="lead">How long people stay, and where they leave.</p></div></div>
+    ${empty("No numbers yet. They appear here once the engine is posting to your pages and reading their insights.").replace("#/brands", "#/admin").replace("Go to Brands", "Open Admin")}`,
 
   brands: () => { const niches = [...new Set(WS.brands.map((b) => b.niche))];
     return `
     <div class="head"><div><h1>Brands</h1><p class="lead">Every brand you run, in any niche, with all of its pages on every platform.</p></div><button class="btn" data-act="new">Add brand</button></div>
-    ${WS.sample ? `<div class="panel note-bar"><span>This is a sample workspace so you can see how it works. Your brands are saved in this browser.</span><button class="btn ghost" data-act="fresh">Start empty</button></div>` : ""}
     <div id="bfh"></div>
     ${niches.length > 1 ? `<div class="chips" id="nf"><button class="chip on" data-n="">All niches</button>${niches.map((n) => `<button class="chip" data-n="${esc(n)}">${esc(n)}</button>`).join("")}</div>` : ""}
-    <div class="grid g2" id="bl">${WS.brands.map(brandCard).join("") || `<div class="emptyc"><p>No brands yet. Add your first one: any niche, any language.</p><button class="btn" data-act="new">Add brand</button> <button class="btn ghost" data-act="sample">Load the sample</button></div>`}</div>`; },
+    <div class="grid g2" id="bl">${WS.brands.map(brandCard).join("") || `<div class="emptyc"><p>No brands yet. Add your first one: any niche, any language.</p><button class="btn" data-act="new">Add brand</button></div>`}</div>`; },
 
   social: () => { const pl = byPlatform();
     return `
     <div class="head"><div><h1>Schedule</h1><p class="lead">What's scheduled where. Amber slots are waiting on approval.</p></div><div class="hctl">${picker()}<a class="btn ghost" href="#/review">Open review</a></div></div>
     ${pl.length ? `<div class="accts">${pl.map(([p, n]) => `<div class="panel"><span class="muted">${esc(p)}</span><b class="num">${n}</b><small class="muted">${n === 1 ? "page" : "pages"} connected</small></div>`).join("")}</div>
-    <div class="panel"><div class="slots"><span></span>${["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => `<span>${d}</span>`).join("")}
-      ${pl.slice(0, 8).map(([p], r) => `<span style="color:var(--ink)">${esc(p)}</span>${Array.from({ length: 7 }, (_, c) => `<i class="${(r * 3 + c * 5) % 7 < 4 ? "f" : (r + c) % 5 === 0 ? "h" : ""}"></i>`).join("")}`).join("")}</div>
-      <p class="muted" style="margin-top:16px">Where a platform has no posting API, Meduza prepares the file, caption and time for you to upload.</p></div>`
+    <div class="panel"><h2>This week</h2><p class="muted" style="margin-top:6px">Nothing scheduled yet. Approved videos get a time slot here once the engine is posting. Where a platform has no posting API, Meduza prepares the file, caption and time for you to upload.</p></div>`
       : empty("No pages connected for " + esc(curName()) + " yet. Add pages to a brand to schedule posts.")}`; },
 
   review: () => `
     <div class="head"><div><h1>Review</h1><p class="lead">Nothing goes out until you approve it. Flagged items come first.</p></div>${picker()}</div>
-    <div class="panel" id="rq">${mine(REVIEW).map(([t, id, k, why]) => `<div class="row">${sw(B(id))}
-      <div class="grow"><div class="title">${esc(t)}</div><small>${esc(B(id).name)}, ${k.toLowerCase()}${why ? ` · <span class="y">${why}</span>` : ""}</small></div>
-      <a class="btn ghost" href="#/editor">Open</a><button class="btn" data-ok>Approve</button></div>`).join("") || '<p class="muted">All caught up. Nothing waiting on you.</p>'}</div>`,
+    <div class="panel" id="rq">${mine(JOBS()).filter((r) => r[6].status === "review").map(([t, id, k, , , , x]) => `<div class="row" data-job="${x.id}">${sw(B(id))}
+      <div class="grow"><div class="title">${esc(t)}</div><small>${esc(B(id).name)}, ${k.toLowerCase()}${x.flag ? ` · <span class="y">${esc(x.flag)}</span>` : ""}</small></div>
+      <a class="btn ghost" href="#/editor">Open</a><button class="btn" data-ok>Approve</button></div>`).join("") || '<p class="muted">All caught up. Nothing waiting on you. Finished videos land here for your approval before anything goes out.</p>'}</div>`,
 
   admin: () => `
     <div class="head"><div><h1>Admin</h1><p class="lead">Connect your server, then add the keys Meduza uses. Keys go straight to your server and are stored there encrypted. They are never kept in this browser or in GitHub, and the site can't read them back.</p></div></div>
@@ -299,15 +267,16 @@ const V = {
   war: () => `
     <div class="head"><div><h1>War room</h1><p class="lead">The server, the pipeline and the money, on one screen.</p></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn" href="#/admin">Open control panel</a><a class="btn ghost" data-link="vpsRepo">Server repo</a><a class="btn ghost" data-link="engineRepo">Engine repo</a></div></div>
-    <p class="muted" id="wnote" style="margin:-10px 0 14px">Sample numbers. Connect your server in Admin to see it live.</p><div class="grid g3" id="rings" style="margin-bottom:16px"><div class="panel">${ring(.31, "processor, 2 cores", "31%")}</div><div class="panel">${ring(.58, "memory, of 8 GB", "4.6 GB")}</div><div class="panel">${ring(.74, "disk, of 100 GB", "74 GB", "var(--soft)")}</div></div>
-    <div class="panel" style="margin-bottom:16px"><h2>Pipeline</h2><p class="muted">Items at each stage right now.</p>
-      <div class="river">${[["Research", 2], ["Evidence", 1], ["Script", 3, "busy"], ["Fact-check", 2, "hot"], ["Voice", 0], ["Render", 1, "busy"], ["Reels", 4], ["Package", 0], ["Approval", 5]].map(([n, c, k = ""]) => `<div class="${k}"><b class="num">${c}</b>${n}</div>`).join("")}</div></div>
-    <div class="grid g3">
-      <div class="panel"><h2>Services</h2><p class="muted">On the server.</p>${[["Postiz", "Publishing", ""], ["Temporal", "Job runner", ""], ["Postgres", "Database", ""], ["Redis", "Queue", ""], ["n8n", "Paused", "amber"]].map(([n, d, c]) => `<div class="row"><i class="dot ${c}"></i><div class="grow"><div class="title">${n}</div></div><small>${d}</small></div>`).join("")}</div>
-      <div class="panel"><h2>Spend this month</h2><p class="muted">Hard stop at 18 dollars.</p><b class="num" style="font:650 2.6rem var(--display)">$<span data-count="7.40">7.40</span></b>
-        <div class="meter" style="margin:14px 0 8px"><i style="--v:37%"></i></div><small class="muted">Scripts 4.10, fact-check 1.70, search 1.20, the rest 0.40</small></div>
-      <div class="panel"><h2>Needs attention</h2><p class="muted">Newest first.</p>
-        ${[["Disk passes 70%", "Old renders can be cleared", "amber"], ["Fact-check flagged 2 items", "Waiting in the editor", "sting"], ["Nightly run finished", "5 of 5 items, 01:42", ""]].map(([t, d, c]) => `<div class="row"><i class="dot ${c}"></i><div class="grow"><div class="title">${t}</div><small>${d}</small></div></div>`).join("")}</div>
+    <p class="muted" id="wnote" style="margin:-10px 0 14px">${online ? "Reading your server…" : "Server not connected."}</p>
+    <div class="grid g3" id="rings" style="margin-bottom:16px">${online ? "" : empty("Connect your server in Admin to see its processor, memory and disk.").replace("#/brands", "#/admin").replace("Go to Brands", "Open Admin")}</div>
+    <div class="panel" style="margin-bottom:16px"><h2>Pipeline</h2><p class="muted">Your videos at each stage right now.</p>
+      <div class="river">${Object.entries(LABEL).map(([k, n]) => `<div class="${k === "working" ? "busy" : k === "review" ? "hot" : ""}"><b class="num">${(WS.jobs || []).filter((x) => x.status === k).length}</b>${n}</div>`).join("")}</div></div>
+    <div class="grid g2">
+      <div class="panel"><h2>Services</h2><p class="muted">What Meduza runs on.</p>
+        <div class="row"><i class="dot ${online ? "" : "off"}"></i><div class="grow"><div class="title">Meduza server</div></div><small>${online ? "Running" : "Not connected"}</small></div>
+        <div class="row"><i class="dot off"></i><div class="grow"><div class="title">Engine (makes and posts the videos)</div></div><small>Not connected yet</small></div></div>
+      <div class="panel"><h2>Needs attention</h2><p class="muted">What to do next.</p>
+        ${[[!online, "Connect your server", "Admin, then paste the address and password", "#/admin"], [!WS.brands.length, "Add your first brand", "Brands, then add its pages", "#/brands"], [(WS.jobs || []).some((x) => x.status === "review"), "Videos waiting for approval", "Open Review", "#/review"]].filter((r) => r[0]).map(([, t, d, href]) => `<a class="row" href="${href}" style="text-decoration:none"><i class="dot amber"></i><div class="grow"><div class="title">${t}</div><small>${d}</small></div></a>`).join("") || '<p class="muted" style="margin-top:12px">Nothing right now.</p>'}</div>
     </div>`,
 };
 
@@ -330,7 +299,7 @@ function celebrate() {
   const bubs = Array.from({ length: 14 }, (_, i) => `<i class="bub" style="left:${4 + ((i * 61) % 84)}%;top:${12 + ((i * 37) % 52)}%;--d:${22 + ((i * 13) % 30)}px;--t:${(1.2 + (i * .17) % 1.9).toFixed(2)}s"></i>`).join("");
   const d = document.createElement("div"); d.className = "finish";
   d.innerHTML = `<div class="card" role="dialog" aria-label="Video ready"><div class="bubbles">${bubs}</div>${medusa("kiss")}
-    <h2>Your video is ready</h2><p>Version 3 of ${esc(mine(QUEUE)[0]?.[0] || "your video")}.</p>
+    <h2>Your video is ready</h2><p>It's waiting for your approval in Review.</p>
     <div class="btns"><button class="btn" data-x>Watch it</button><a class="btn ghost" href="#/studio" data-x>Make another</a></div></div>`;
   d.onclick = (e) => { if (e.target === d || e.target.closest("[data-x]")) d.remove(); };
   document.body.append(d); $(".btn", d).focus();
@@ -386,10 +355,13 @@ const HOOKS = {
       $("#rings").innerHTML = `<div class="panel">${ring(Math.min(1, s.load / s.cpus), `processor, ${s.cpus} cores`, Math.round(Math.min(1, s.load / s.cpus) * 100) + "%")}</div>`
         + `<div class="panel">${ring(used(s.mem.total, s.mem.free), "memory, of " + gb(s.mem.total), gb(s.mem.total - s.mem.free))}</div>`
         + (s.disk ? `<div class="panel">${ring(used(s.disk.total, s.disk.free), "disk, of " + gb(s.disk.total), gb(s.disk.total - s.disk.free), "var(--soft)")}</div>` : "");
-      $("#wnote").textContent = "Live from your server. Pipeline and spend are samples until the engine reports them.";
+      $("#wnote").textContent = "Live from your server.";
     }).catch((e) => toast(e.message));
   },
   ideas: () => {
+    $("main").addEventListener("click", (e) => { const q = e.target.closest("[data-q]"); if (!q) return; const b = B(q.dataset.qb); if (!b) return;
+      WS.jobs = [{ id: "v" + Date.now().toString(36), t: q.dataset.q, b: b.id, kind: "Reel", status: "queued", created: Date.now(), pages: b.pages, src: "Meduza script", foot: "", ref: "", look: "Overall style", cap: "On", music: "Auto", notes: "" }, ...(WS.jobs || [])];
+      save(); toast("Queued for " + b.name); q.disabled = true; q.textContent = "Queued"; });
     const btn = $("[data-find]");
     btn.onclick = async () => {
       if (!online) return toast("Connect your server in Admin first, then add an AI key.");
@@ -415,8 +387,6 @@ const HOOKS = {
       else if (act === "rm-page") { b.pages.splice(+t.dataset.i, 1); commit(); }
       else if (act === "del") { if (t.dataset.sure) { WS.brands = WS.brands.filter((x) => x !== b); if (WS.cur === b.id) WS.cur = "all"; commit(); toast("Brand deleted"); }
         else { t.dataset.sure = "1"; t.textContent = "Tap again to delete"; setTimeout(() => { if (t.isConnected) { delete t.dataset.sure; t.textContent = "Delete"; } }, 3000); } }
-      else if (act === "fresh") { WS = { sample: false, cur: "all", brands: [] }; save(); go(); }
-      else if (act === "sample") { WS = SAMPLE(); save(); go(); }
     };
     host.onsubmit = (e) => {
       e.preventDefault(); const f = e.target, v = (n) => f.elements[n]?.value.trim() || "";
@@ -430,32 +400,28 @@ const HOOKS = {
       $$("#bl [data-b]").forEach((card) => { card.hidden = !!c.dataset.n && B(card.dataset.b).niche !== c.dataset.n; }); });
   },
   review: () => {
-    $("#rq").onclick = (e) => { const b = e.target.closest("[data-ok]"); if (!b) return; b.closest(".row").remove(); toast("Approved. It goes out in the next open slot.");
+    $("#rq").onclick = (e) => { const b = e.target.closest("[data-ok]"); if (!b) return; const x = job(b.closest("[data-job]").dataset.job); if (x) { x.status = "approved"; save(); } b.closest(".row").remove(); toast("Approved. It goes out in the next open slot.");
       if (!$("#rq .row")) $("#rq").innerHTML = '<p class="muted">All caught up. Nothing waiting on you.</p>'; };
   },
   studio: () => {
     const sb = $("#sb"), fill = () => { const b = B(sb.value); $("#sp").innerHTML = b.pages.map(([p, h], i) => `<label class="soc pick"><input type="checkbox" checked> <b>${esc(p)}</b><span>${esc(h)}</span></label>`).join("") || '<span class="muted">This brand has no pages yet. Add them on the Brands page.</span>'; };
     if (sb) { sb.onchange = fill; fill(); }
-    $("#make").onclick = () => sessionStorage.setItem("meduzaFresh", "1");
-    $("[data-scan]").onclick = () => { const box = $("#scan"), li = $$(".scan li"); box.hidden = false; let p = 0; li.forEach((l) => l.classList.remove("ok"));
-      const id = setInterval(() => { p = Math.min(100, p + 3); $("#pct").textContent = p + "%"; $("#bar").style.setProperty("--v", p + "%"); li.forEach((l, i) => l.classList.toggle("ok", p >= (i + 1) * 14)); if (p === 100) clearInterval(id); }, 90); stop = () => clearInterval(id); };
+    const pick = (id) => $(`[data-seg="${id}"] button.on`)?.textContent || "";
+    $("#make").onclick = () => {
+      if (!sb) return toast("Add a brand first");
+      const t = $("#vt").value.trim(); if (!t) { $("#vt").focus(); return toast("Give the video a name"); }
+      const b = B(sb.value), on = $$("#sp input").map((c, i) => c.checked && b.pages[i]).filter(Boolean);
+      if (!on.length) return toast("Pick at least one page");
+      const x = { id: "v" + Date.now().toString(36), t, b: b.id, kind: pick("kind"), status: "queued", created: Date.now(), pages: on, src: pick("src"), foot: $("#foot").value.trim(), ref: $("#ref").value.trim(),
+        look: $(".look.on b")?.textContent || pick("look"), cap: pick("cap"), music: pick("music"), notes: $("#vn").value.trim() };
+      WS.jobs = [x, ...(WS.jobs || [])]; save(); sessionStorage.setItem("meduzaJob", x.id); toast("Queued. The engine starts it once it's connected."); location.hash = "#/editor";
+    };
     $("#looks").onclick = (e) => { const l = e.target.closest(".look"); if (l) $$(".look").forEach((o) => o.classList.toggle("on", o === l)); };
   },
   editor: () => {
-    const tl = $("#tl"), ph = $("#ph"), len = 35; let p = .3, drag = false, raf;
-    const set = (v) => { p = Math.max(0, Math.min(1, v)); ph.style.setProperty("--p", p); $("#screen").style.setProperty("--px", 20 + p * 60 + "%");
-      const s = p * len; $("#tc").textContent = `0:${s.toFixed(2).padStart(5, "0")}`; $("#fr").textContent = "Frame " + Math.round(s * 30); };
-    const at = (e) => { const r = $(".track", tl).getBoundingClientRect(); set((e.clientX - r.left) / r.width); };
-    tl.onpointerdown = (e) => { drag = true; tl.setPointerCapture(e.pointerId); at(e); }; tl.onpointermove = (e) => drag && at(e); tl.onpointerup = () => (drag = false);
-    const play = () => { if (!drag) set(p >= 1 ? 0 : p + .0009); raf = requestAnimationFrame(play); }; set(p); if (!calm) play();
-    $("#add").onclick = () => { const f = $("#fb"); if (!f.value.trim()) return f.focus(); const n = document.createElement("div"); n.className = "note";
-      n.innerHTML = `<time>${$("#tc").textContent}</time><span></span>`; n.lastChild.textContent = f.value.trim(); $("#notes").prepend(n); f.value = ""; };
-    let timer; const work = $("#work");
-    const render = () => { clearTimeout(timer); work.className = "chip cutting"; work.innerHTML = '<i class="dot sting"></i>Rendering version 3';
-      timer = setTimeout(() => { work.className = "chip ready"; work.textContent = "Version 3 ready"; celebrate(); }, 2200); };
-    $("#render").onclick = render;
-    if (sessionStorage.getItem("meduzaFresh")) { sessionStorage.removeItem("meduzaFresh"); render(); }
-    stop = () => { cancelAnimationFrame(raf); clearTimeout(timer); };
+    $("main").onclick = (e) => { const t = e.target.closest("[data-act]"); if (!t) return; const x = job(t.closest("[data-jid]")?.dataset.jid); if (!x) return;
+      if (t.dataset.act === "save-notes") { x.notes = $("#jn").value.trim(); save(); toast("Notes saved"); }
+      if (t.dataset.act === "del-job") { if (!t.dataset.sure) { t.dataset.sure = "1"; t.textContent = "Tap again to delete"; return; } WS.jobs = WS.jobs.filter((y) => y !== x); sessionStorage.removeItem("meduzaJob"); save(); toast("Video deleted"); location.hash = "#/videos"; } };
   },
 };
 
@@ -467,6 +433,7 @@ function go() {
   $$("#nav a").forEach((a) => a.classList.toggle("on", a.dataset.id === id));
   scrollTo(0, 0); segs(); counts(); act(); HOOKS[id]?.();
   $$("[data-pick]").forEach((s) => (s.onchange = () => { WS.cur = s.value; save(); go(); }));
+  $$("[data-job]").forEach((el) => el.addEventListener("click", () => sessionStorage.setItem("meduzaJob", el.dataset.job)));
   $$("[data-link]").forEach((a) => { const u = LINKS[a.dataset.link]; if (u) { a.href = u; a.target = "_blank"; a.rel = "noopener"; } else a.onclick = () => toast("No address set for this yet"); });
   $$("[data-toast]").forEach((b) => (b.onclick = () => toast(b.dataset.toast)));
 }

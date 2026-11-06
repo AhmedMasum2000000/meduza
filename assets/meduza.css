@@ -283,6 +283,8 @@ textarea.field { height: 120px; padding: 12px 14px; resize: vertical; }
 .accts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
 .accts .panel b { font: 650 1.8rem var(--display); display: block; margin-top: 6px; }
 #rq .row .btn { flex: none; }
+.kvl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; margin: 14px 0 0; } .kvl dt { color: var(--muted); } .kvl dd { margin: 0; overflow-wrap: anywhere; }
+.row[data-job] { cursor: pointer; }
 /* Admin */
 .krow { display: grid; grid-template-columns: minmax(0, 1.2fr) auto minmax(0, 1.4fr) auto auto; gap: 10px 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
 .krow small { color: var(--muted); }
