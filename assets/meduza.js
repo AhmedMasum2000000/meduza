@@ -52,25 +52,21 @@ const rows = (list) => list.map(([t, b, k, d, s, l]) => `
 const tide = (n, seed = 1) => `<div class="tide">${Array.from({ length: n }, (_, i) =>
   `<i style="height:${25 + ((i * 37 * seed + 13) % 70)}%;animation-delay:${i * 28}ms"></i>`).join("")}</div>`;
 const wave = () => `<span class="wave">${Array.from({ length: 22 }, (_, i) => `<i style="--h:${4 + ((i * 53 + 7) % 18)}px;--i:${i}"></i>`).join("")}</span>`;
-let fxn = 0;
-// Drawn over the art in the image's own 640-unit space: eyes that can roll, a hand, breath, a vein mark and a kiss.
-const fx = () => { const n = ++fxn; const finger = (x, y, a, L) => `<g transform="translate(${x} ${y}) rotate(${a})"><rect x="-6.5" y="${-L}" width="13" height="${L + 12}" rx="6.5"/><path class="nail" d="M-4.6,${9 - L} Q-5.5,${-L - 5} 0,${-L - 11} Q5.5,${-L - 5} 4.6,${9 - L} Z"/></g>`;
-  return `<svg class="fx" viewBox="0 0 640 640" aria-hidden="true">
-  <defs><clipPath id="eR${n}"><path d="M296,339 C305,333 314,330.5 322,330.2 L340,330.3 C345,330.6 349,330.4 351,330 C346,332.5 340,334.5 335,335.6 C330,337.6 324,339.4 318,339.4 C310,339.5 302,339.6 296,339 Z"/></clipPath>
-  <clipPath id="eL${n}"><path d="M221,358.6 C224,355.5 229,353.2 233,352.4 C238,351.2 245,350.3 251.5,349.8 C251,352 248,355.5 244,357.6 C240,359.6 234,361 229,360.9 C226,360.6 223,359.8 221,358.6 Z"/></clipPath></defs>
-  <g clip-path="url(#eR${n})"><rect class="white" x="290" y="322" width="66" height="22"/><g class="iris"><circle cx="326" cy="330" r="9"/><circle class="pupil" cx="326" cy="329.5" r="4"/></g></g>
-  <g clip-path="url(#eL${n})"><rect class="white" x="216" y="344" width="40" height="20"/><g class="iris"><circle cx="242.5" cy="351" r="8"/><circle class="pupil" cx="242.5" cy="350.5" r="3.5"/></g></g>
-  <g transform="translate(296 286)"><path class="vein" d="M-8,-3 q5,0 5,-5 M3,-8 q0,5 5,5 M8,3 q-5,0 -5,5 M-3,8 q0,-5 -5,-5"/></g>
-  <circle class="sigh" cx="262" cy="438" r="6"/>
-  <g transform="translate(378 592) rotate(-12) scale(1.2)"><g class="hand">
-    <g transform="translate(-30 -30) rotate(-48)"><rect x="-7" y="-40" width="14" height="52" rx="7"/><path class="nail" d="M-4.8,-32 Q-5.8,-45 0,-51 Q5.8,-45 4.8,-32 Z"/></g>
-    ${finger(-21, -62, -9, 50)}${finger(-7, -66, -3, 58)}${finger(7, -64, 4, 52)}${finger(20, -58, 12, 40)}
-    <path d="M-30,-66 Q-35,-30 -22,0 L-20,70 L22,70 L24,0 Q35,-30 29,-62 Q0,-74 -30,-66 Z"/>
-    <path class="spark" d="M4,-150 L7,-141 L16,-138 L7,-135 L4,-126 L1,-135 L-8,-138 L1,-141 Z"/>
-  </g></g>
-  <g class="puff"><path d="M292,426 q16,-2 28,6"/><path d="M291,434 q14,2 24,12"/><path d="M287,441 q10,6 16,18"/></g>
-  <path class="heart" d="M0,6 C-9,-2 -5,-9 0,-4 C5,-9 9,-2 0,6 Z"/></svg>`; };
-const medusa = (k) => `<span class="medusa ${k}"><i class="art"></i>${/act|kiss/.test(k) ? fx() : ""}<i class="lid l"></i><i class="lid r"></i></span>`;
+// Medusa's expressions: patches of the same drawing (x, y, w, h in % of the square), crossfaded over the base art.
+const EX = {"smirk":[39.06,62.66,14.22,24.06],"smile":[32.34,42.5,36.25,47.66],"wink":[28.91,42.5,41.41,57.5],"cheek":[20.0,42.5,59.84,57.5],"pensive":[15.94,39.38,66.88,60.62],"hands":[27.34,43.91,36.56,56.09],"hearts":[9.06,33.91,58.44,66.09]};
+const exes = () => Object.entries(EX).map(([n, [x, y, w, h]]) => `<span class="ex" data-x="${n}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%;--lm:url(ex-${n}.webp);--pm:url(exp-${n}.webp)"><i class="p"></i><i class="l"></i></span>`).join("");
+const medusa = (k) => `<span class="medusa ${k}"><i class="art"></i><i class="glint"></i>${exes()}</span>`;
+const mood = (m, x) => $$(".ex", m).forEach((e) => e.classList.toggle("on", e.dataset.x === x));
+// Idle acting: bored, then sassy. Tap her for hearts. Pauses while the tab is hidden.
+let actT;
+function act() {
+  clearTimeout(actT); const m = $(".medusa.act"); if (!m || calm) return;
+  const seq = [["", 2400], ["pensive", 2600], ["", 1500], ["smirk", 1600], ["", 1800], ["cheek", 2200], ["", 1500], ["wink", 1400], ["", 1700], ["smile", 2100], ["", 1600], ["hands", 1700]];
+  let i = 0;
+  const step = () => { if (!m.isConnected) return; if (!document.hidden) { i = (i + 1) % seq.length; mood(m, seq[i][0]); } actT = setTimeout(step, seq[i][1]); };
+  actT = setTimeout(step, seq[0][1]);
+  m.closest(".frame").onclick = () => { clearTimeout(actT); mood(m, "hearts"); actT = setTimeout(() => { mood(m, "smile"); actT = setTimeout(step, 1800); }, 2600); };
+}
 const seg = (id, items, on = 0) => `<div class="seg" data-seg="${id}"><span class="pill"></span>${items.map((t, i) => `<button class="${i === on ? "on" : ""}">${t}</button>`).join("")}</div>`;
 const ring = (v, label, text, c = "var(--yellow)") => `<div class="vital"><svg class="ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/><circle class="v" cx="50" cy="50" r="40" style="--v:${v};--c:${c}"/></svg><div><b class="num">${text}</b><span class="muted">${label}</span></div></div>`;
 
@@ -89,7 +85,7 @@ const looks = (tab) => LOOKS[tab].map(([n, d, a = "#2a2c30", b = "#0a0a0b"], i) 
 const V = {
   home: () => `
     <div class="reel">
-      <a class="feature" href="#/studio"><div class="shot a1"><span class="medusa inv" style="--s:78%;position:absolute;left:11%;top:-6%"><i class="art"></i><i class="lid l"></i><i class="lid r"></i></span></div><h2>Studio<span class="badge">New</span></h2><p>Raw file or script in, finished cut out</p></a>
+      <a class="feature" href="#/studio"><div class="shot a1"><span class="medusa inv" style="--s:78%;position:absolute;left:11%;top:-6%"><i class="art"></i></span></div><h2>Studio<span class="badge">New</span></h2><p>Raw file or script in, finished cut out</p></a>
       <a class="feature" href="#/editor"><div class="shot a2"></div><h2>Editor</h2><p>Pin a note to any frame, get a new version</p></a>
       <a class="feature" href="#/war"><div class="shot a3"></div><h2>War room</h2><p>Server, pipeline and spend on one screen</p></a>
       <a class="feature" href="#/brands"><div class="shot a4"></div><h2>Brands</h2><p>Ten voices that never sound alike</p></a>
@@ -220,6 +216,8 @@ function celebrate() {
     <div class="btns"><button class="btn" data-x>Watch it</button><a class="btn ghost" href="#/studio" data-x>Make another</a></div></div>`;
   d.onclick = (e) => { if (e.target === d || e.target.closest("[data-x]")) d.remove(); };
   document.body.append(d); $(".btn", d).focus();
+  const m = $(".medusa", d);
+  if (calm) mood(m, "hearts"); else { setTimeout(() => mood(m, "wink"), 250); setTimeout(() => mood(m, "hearts"), 1150); }
 }
 const HOOKS = {
   studio: () => {
@@ -252,7 +250,7 @@ function go() {
   const id = V[location.hash.slice(2)] ? location.hash.slice(2) : "home", main = $("main");
   main.innerHTML = V[id](); main.style.animation = "none"; void main.offsetWidth; main.style.animation = "";
   $$("#nav a").forEach((a) => a.classList.toggle("on", a.dataset.id === id));
-  scrollTo(0, 0); segs(); counts(); HOOKS[id]?.();
+  scrollTo(0, 0); segs(); counts(); act(); HOOKS[id]?.();
   $$("[data-link]").forEach((a) => { const u = LINKS[a.dataset.link]; if (u) { a.href = u; a.target = "_blank"; a.rel = "noopener"; } else a.onclick = () => toast("No address set for this yet"); });
   $$("[data-toast]").forEach((b) => (b.onclick = () => toast(b.dataset.toast)));
 }

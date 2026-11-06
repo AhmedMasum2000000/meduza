@@ -221,75 +221,23 @@ textarea.field { height: 120px; padding: 12px 14px; resize: vertical; }
 .toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 20px); opacity: 0; background: var(--ink); color: var(--bg); padding: 11px 18px; border-radius: 999px; font-weight: 550; z-index: 60; transition: .3s cubic-bezier(.2,.8,.2,1); pointer-events: none; }
 .toast.show { transform: translate(-50%, 0); opacity: 1; }
 
-/* Medusa's acting: drawn over the art in its own 640-unit space. */
-.fx { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
-.fx .white { fill: var(--lidbg); }
-.fx .iris circle { fill: none; stroke: var(--fg); stroke-width: 1.7; }
-.fx .iris .pupil { fill: var(--fg); stroke: none; }
-.fx .vein { fill: none; stroke: var(--fg); stroke-width: 2.6; stroke-linecap: round; transform: scale(0); }
-.fx .puff path { fill: none; stroke: var(--fg); stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 24; stroke-dashoffset: 24; opacity: 0; }
-.fx .sigh { fill: none; stroke: var(--fg); stroke-width: 1.8; opacity: 0; transform-box: fill-box; transform-origin: center; }
-.fx .hand { transform: translateY(260px); }
-.fx .hand * { fill: var(--lidbg); stroke: var(--fg); stroke-width: 2.2; stroke-linejoin: round; }
-.fx .hand .nail { fill: var(--fg); }
-.fx .hand .spark { fill: var(--fg); stroke: none; transform: scale(0); transform-box: fill-box; transform-origin: center; }
-.fx .heart { fill: var(--fg); opacity: 0; transform: translate(272px, 424px) scale(.2); }
-
-/* Idle loop, 26 seconds: she blows on her nails, then rolls her eyes and gets annoyed. */
-.act .hand { animation: nails 26s infinite; }
-.act .puff path { animation: foosh 26s infinite; }
-.act .puff path:nth-child(2) { animation-delay: .12s; } .act .puff path:nth-child(3) { animation-delay: .22s; }
-.act .spark { animation: spark 26s infinite; }
-.act .iris { animation: roll 26s infinite; }
-.act .vein { animation: vein 26s infinite; }
-.act .sigh { animation: sigh 26s infinite; }
-/* In the loop her blinks are scheduled so the eyes stay open for the roll, then narrow in annoyance. */
-.act .lid { animation: actblink 26s infinite; }
-@keyframes actblink {
-  0%, 8%, 12%, 20%, 24%, 53%, 57.5%, 74%, 85%, 91%, 95%, 100% { transform: rotate(var(--r)) scaleY(0); }
-  9.5%, 10.5%, 21.5%, 22.5%, 54.5%, 55.5%, 92.5%, 93.5% { transform: rotate(var(--r)) scaleY(1); }
-  77%, 82% { transform: rotate(var(--r)) scaleY(.5); }
-}
-@keyframes nails {
-  0%, 23%, 53%, 100% { transform: translateY(260px); }
-  28%, 31% { transform: none; }
-  34%, 40% { transform: translateY(-4px) rotate(-3deg); }
-  37% { transform: none; }
-  44% { transform: rotate(5deg); } 46.5% { transform: rotate(-3deg); } 49% { transform: none; }
-}
-@keyframes foosh {
-  0%, 31%, 36.5%, 42.5%, 100% { opacity: 0; stroke-dashoffset: 24; }
-  32%, 38% { opacity: 1; stroke-dashoffset: 24; }
-  35%, 41% { opacity: 1; stroke-dashoffset: 0; }
-  36%, 42% { opacity: 0; stroke-dashoffset: -24; }
-}
-@keyframes spark { 0%, 43%, 50%, 100% { transform: scale(0); } 45.5% { transform: scale(1.3) rotate(40deg); } 48% { transform: scale(.8) rotate(90deg); } }
-@keyframes roll {
-  0%, 58%, 74%, 100% { transform: none; }
-  61% { transform: translate(-6px, 1px); } 64% { transform: translate(-4px, -6px); }
-  67% { transform: translate(3px, -7px); } 70.5% { transform: translate(7px, -2px); }
-}
-@keyframes vein { 0%, 62%, 78%, 100% { transform: scale(0); } 64% { transform: scale(1.3); } 66%, 70%, 74% { transform: scale(1); } 68%, 72% { transform: scale(1.2); } }
-@keyframes sigh { 0%, 74%, 84%, 100% { opacity: 0; transform: scale(.4); } 76% { opacity: .9; transform: scale(.7); } 83% { opacity: 0; transform: translate(-30px, 24px) scale(2); } }
-
-/* Completion: a wink, a hand to the lips, and a kiss that flies off. Plays once. */
+/* Medusa's acting: real drawn expressions. Each is a patch of the same drawing, crossfaded over the base art. */
+.medusa .ex { position: absolute; opacity: 0; transition: opacity .3s ease; pointer-events: none; }
+.medusa .ex.on { opacity: 1; }
+.medusa .ex i { position: absolute; inset: 0; -webkit-mask: var(--e) center / 100% 100% no-repeat; mask: var(--e) center / 100% 100% no-repeat; }
+.medusa .ex .p { --e: var(--pm); background: var(--lidbg); }
+.medusa .ex .l { --e: var(--lm); background: var(--fg); }
+/* A glint runs over the line art now and then. */
+.medusa .glint { position: absolute; inset: 0; -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.85) 50%, transparent 60%) no-repeat; background-size: 280% 100%; background-position: 180% 0; animation: glint 9s 2s ease-in-out infinite; }
+@keyframes glint { 0%, 82% { background-position: 180% 0; } 100% { background-position: -80% 0; } }
+.act { animation: loll 12s ease-in-out infinite, breathe 5s ease-in-out infinite; }
+@keyframes breathe { 0%, 100% { translate: 0 0; } 50% { translate: 0 -1.2%; } }
+.promo .frame { cursor: pointer; }
+/* Completion: she winks, then blows hearts. */
 .medusa.kiss { animation: none; }
-.kiss .hand { animation: kisshand 3.6s cubic-bezier(.3,.7,.3,1) forwards; }
-.kiss .heart { animation: fly 3.6s ease-out forwards; }
-.kiss .lid.r { animation: none; } .kiss .lid.l { animation: wink 3.6s forwards; }
-@keyframes kisshand {
-  0% { transform: translateY(260px); }
-  22%, 32% { transform: translate(-84px, -44px) rotate(-8deg); }
-  56% { transform: translate(34px, 6px) rotate(24deg); }
-  82%, 100% { transform: translate(34px, 280px) rotate(24deg); }
-}
-@keyframes fly {
-  0%, 32% { opacity: 0; transform: translate(272px, 424px) scale(.2); }
-  38% { opacity: 1; transform: translate(292px, 408px) scale(1.2); }
-  76% { opacity: 1; transform: translate(470px, 250px) scale(4.2) rotate(14deg); }
-  100% { opacity: 0; transform: translate(566px, 150px) scale(6) rotate(20deg); }
-}
-@keyframes wink { 0%, 18%, 70%, 100% { transform: rotate(var(--r)) scaleY(0); } 26%, 60% { transform: rotate(var(--r)) scaleY(1); } }
+.kiss .ex[data-x="hearts"].on { animation: pop .5s cubic-bezier(.3,1.6,.5,1); }
+@keyframes pop { from { transform: scale(.96); } }
 
 .done { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; background: rgba(0,0,0,.74); backdrop-filter: blur(6px); }
 .done .card { position: relative; width: min(92vw, 440px); background: var(--card); border-radius: 16px; padding: 18px 22px 22px; text-align: center; overflow: hidden; animation: surface .3s ease-out; }
