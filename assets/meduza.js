@@ -236,8 +236,9 @@ const V = {
     <div class="grid g2" id="bl">${WS.brands.map(brandCard).join("") || `<div class="emptyc"><p>No brands yet. Add your first one: any niche, any language.</p><button class="btn" data-act="new">Add brand</button></div>`}</div>`; },
 
   accounts: () => `
-    <div class="head"><div><h1>Accounts</h1><p class="lead">Log in to a social account once, then keep it under the brand it belongs to.</p></div>
-      <div class="hctl"><input class="field" id="afind" type="search" placeholder="Find a brand" aria-label="Find a brand" style="width:220px;height:42px"><button class="btn ghost" data-a="refresh">Refresh</button></div></div>
+    <div class="head"><div><h1>Accounts</h1><p class="lead">Create brands, list their pages, and log in to social accounts once. Everything sits under the brand it belongs to.</p></div>
+      <div class="hctl"><input class="field" id="afind" type="search" placeholder="Find a brand" aria-label="Find a brand" style="width:220px;height:42px"><button class="btn ghost" data-a="refresh">Refresh</button><button class="btn" data-a="newbrand">New brand</button></div></div>
+    <div id="abf"></div>
     <div id="acc"></div>`,
 
   social: () => { const pl = byPlatform();
@@ -342,26 +343,29 @@ function accountsPage() {
   const admin = '<a class="btn ghost" style="margin-top:12px" href="#/admin">Open Admin</a>';
   const note = (msg, extra = "") => `<div class="panel"><p class="muted">${msg}</p>${extra}</div>`;
   const draw = () => {
-    if (!online) { box.innerHTML = note("Connect your server in Admin, then add your Postiz address and key there. Logins happen in Postiz, so passwords never touch this site.", admin); return; }
-    if (accErr) { box.innerHTML = note(esc(accErr), admin); return; }
-    if (!ACC) { box.innerHTML = note("Loading your accounts…"); return; }
-    if (!WS.brands.length) { box.innerHTML = note("Add a brand first, so each account has somewhere to live.", '<a class="btn" style="margin-top:12px" href="#/brands">Add a brand</a>'); return; }
+    const ready = online && !accErr && ACC, chans = ready ? ACC : [];
+    const why = !online ? note("Brands and pages work right away. To log in to social accounts, connect your server in Admin and add your Postiz address and key there. Logins happen in Postiz, so passwords never touch this site.", admin)
+      : accErr ? note(esc(accErr), admin) : note("Loading your accounts…");
+    if (!WS.brands.length) { box.innerHTML = note("Start by adding a brand. Each brand holds its own pages and logins.", '<button class="btn" style="margin-top:12px" data-a="newbrand">Add a brand</button>'); return; }
     const find = ($("#afind")?.value || "").trim().toLowerCase(), target = B(WS.accBrand) ? WS.accBrand : WS.brands[0].id;
     const opts = (sel) => `<option value="">Not filed</option>${WS.brands.map((b) => `<option value="${b.id}"${b.id === sel ? " selected" : ""}>${esc(b.name)}</option>`).join("")}`;
     const row = (c) => `<div class="row arow" data-c="${esc(c.id)}"><i class="dot ${c.disabled ? "off" : ""}"></i><div class="grow"><div class="title">${esc(c.name)}</div><small>${esc(PZNAME[c.platform] || c.platform)}${c.profile ? ", @" + esc(c.profile) : ""}${c.disabled ? ". Needs logging in again" : ""}</small></div>
       <select class="field" data-a="move" aria-label="Brand for ${esc(c.name)}">${opts(B(WS.links[c.id]) ? WS.links[c.id] : "")}</select>
       <button class="btn ghost" data-a="again" data-p="${esc(c.platform)}">Log in again</button><button class="btn ghost" data-a="remove">Remove</button></div>`;
     const cats = (list) => [...SOC.map(([n]) => n), "Other"].map((n) => { const l = list.filter((c) => catOf(c.platform) === n); return l.length ? `<p class="cat">${n}</p>${l.map(row).join("")}` : ""; }).join("");
-    const loose = ACC.filter((c) => !B(WS.links[c.id]));
+    const pages = (b) => `<p class="cat">Pages</p><div class="socs">${b.pages.map(([p, h], i) => `<span class="soc"><b>${esc(p)}</b><span>${esc(h)}</span><button type="button" class="x" data-a="rmpage" data-i="${i}" aria-label="Remove ${esc(p)} ${esc(h)}">×</button></span>`).join("") || '<span class="muted">No pages listed yet.</span>'}</div>
+      <form class="addp" data-a="addpage"><select class="field" name="p" aria-label="Platform">${PLATFORMS.map((p) => `<option>${p}</option>`).join("")}</select><input class="field" name="h" placeholder="@handle or page name" aria-label="Handle or page name" required><button class="btn ghost">Add page</button></form>`;
+    const loose = chans.filter((c) => !B(WS.links[c.id]));
     const shown = WS.brands.filter((b) => !find || b.name.toLowerCase().includes(find));
-    box.innerHTML = `<div class="panel" style="margin-bottom:14px"><h2>Add an account</h2>
+    box.innerHTML = `${ready ? `<div class="panel" style="margin-bottom:14px"><h2>Add a login</h2>
         <div class="cgrid"><span class="muted">1. Put it under</span><div class="btns"><select class="field" data-a="target" aria-label="Brand for new logins" style="width:auto;max-width:260px">${WS.brands.map((b) => `<option value="${b.id}"${b.id === target ? " selected" : ""}>${esc(b.name)}</option>`).join("")}</select></div>
         ${SOC.map(([n, l], i) => `<span class="muted">${i ? "" : "2. Log in to"}</span><div class="btns"><span class="cat" style="margin:0;min-width:92px">${n}</span>${l.map(([id, name]) => `<button class="btn ghost" data-a="connect" data-p="${id}">${name}</button>`).join("")}</div>`).join("")}</div>
-        <p class="muted" style="margin-top:14px">The login opens in a new tab. When you finish there, come back here and the account appears under the brand you chose.</p></div>
+        <p class="muted" style="margin-top:14px">The login opens in a new tab. When you finish there, come back here and the account appears under the brand you chose.</p></div>` : `<div style="margin-bottom:14px">${why}</div>`}
       ${loose.length ? `<div class="panel" style="margin-bottom:14px"><h2>Not filed yet</h2><p class="muted" style="margin-top:6px">Pick a brand for each of these.</p>${cats(loose)}</div>` : ""}
-      ${shown.map((b) => { const mine = ACC.filter((c) => WS.links[c.id] === b.id), sw = SWATCH[b.c % SWATCH.length];
-        return `<div class="panel" style="margin-bottom:14px"><div style="display:flex;align-items:center;gap:12px"><span class="swatch" style="background:linear-gradient(150deg,${sw[0]},${sw[1]})"></span><div class="grow" style="flex:1"><h2>${esc(b.name)}</h2><small class="muted">${esc(b.niche || "")}${b.lang ? ", " + esc(b.lang) : ""}</small></div><span class="chip">${mine.length} ${mine.length === 1 ? "account" : "accounts"}</span></div>
-          ${cats(mine) || '<p class="muted" style="margin-top:12px">No accounts under this brand yet.</p>'}</div>`; }).join("") || note("No brand matches that name.")}`;
+      ${shown.map((b) => { const mine = chans.filter((c) => WS.links[c.id] === b.id), sw = SWATCH[b.c % SWATCH.length];
+        return `<div class="panel" style="margin-bottom:14px" data-b="${b.id}"><div style="display:flex;align-items:center;gap:12px"><span class="swatch" style="background:linear-gradient(150deg,${sw[0]},${sw[1]})"></span><div class="grow" style="flex:1"><h2>${esc(b.name)}</h2><small class="muted">${esc(b.niche || "")}${b.lang ? ", " + esc(b.lang) : ""}</small></div><span class="chip">${ready ? mine.length + (mine.length === 1 ? " login, " : " logins, ") : ""}${b.pages.length} ${b.pages.length === 1 ? "page" : "pages"}</span></div>
+          ${ready ? cats(mine) || '<p class="muted" style="margin-top:12px">No logins under this brand yet.</p>' : ""}
+          ${pages(b)}</div>`; }).join("") || note("No brand matches that name.")}`;
   };
   const load = async () => { accErr = "";
     try { const d = await api("/api/postiz/overview"), pend = JSON.parse(sessionStorage.getItem("meduzaPend") || "null");
@@ -376,8 +380,11 @@ function accountsPage() {
       if (tab) tab.location = d.url; else location.href = d.url;
     } catch (e) { tab?.close(); toast(e.message); } };
   const host = $("main");
-  host.onclick = async (e) => { const t = e.target.closest("[data-a]"); if (!t || t.tagName === "SELECT") return; const a = t.dataset.a, id = t.closest("[data-c]")?.dataset.c;
-    if (a === "refresh") { ACC = null; draw(); load(); }
+  host.onclick = async (e) => { if (e.target.closest("[data-act=cancel]")) { $("#abf").innerHTML = ""; return; }
+    const t = e.target.closest("[data-a]"); if (!t || t.tagName === "SELECT" || t.tagName === "FORM") return; const a = t.dataset.a, id = t.closest("[data-c]")?.dataset.c;
+    if (a === "newbrand") { $("#abf").innerHTML = brandForm(); $("#bf [name=name]").focus(); $("#bf").scrollIntoView({ block: "nearest" }); }
+    else if (a === "rmpage") { B(t.closest("[data-b]").dataset.b).pages.splice(+t.dataset.i, 1); save(); draw(); }
+    else if (a === "refresh") { ACC = null; draw(); if (online) load(); }
     else if (a === "connect") login(t.dataset.p);
     else if (a === "again") login(t.dataset.p, id);
     else if (a === "remove") { if (!t.dataset.sure) { t.dataset.sure = "1"; t.textContent = "Tap again to remove"; setTimeout(() => { if (t.isConnected) { delete t.dataset.sure; t.textContent = "Remove"; } }, 3000); return; }
@@ -385,6 +392,10 @@ function accountsPage() {
   host.onchange = (e) => { const t = e.target.closest("[data-a]"); if (!t) return;
     if (t.dataset.a === "target") { WS.accBrand = t.value; save(); }
     else if (t.dataset.a === "move") { const id = t.closest("[data-c]").dataset.c; if (t.value) WS.links[id] = t.value; else delete WS.links[id]; save(); draw(); } };
+  host.onsubmit = (e) => { e.preventDefault(); const f = e.target, v = (n) => f.elements[n]?.value.trim() || "";
+    if (f.id === "bf") { const b = { id: "b" + Date.now().toString(36), c: WS.brands.length % SWATCH.length, pages: [], name: v("name"), niche: v("niche"), lang: v("lang"), lane: v("lane") };
+      WS.brands.push(b); WS.accBrand = b.id; WS.sample = false; save(); $("#abf").innerHTML = ""; draw(); toast("Brand added. Now add its pages and logins."); }
+    else if (f.dataset.a === "addpage") { B(f.closest("[data-b]").dataset.b).pages.push([v("p"), v("h")]); save(); draw(); } };
   $("#afind").oninput = draw;
   const back = () => { if (sessionStorage.getItem("meduzaPend") && $("#acc") === box) load(); };
   addEventListener("focus", back); stop = () => removeEventListener("focus", back);
