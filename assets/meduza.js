@@ -73,7 +73,7 @@ const KEYS = [
   ["Image generation", [["stability", "Stability AI", "Stable Diffusion images"], ["leonardo", "Leonardo", "Images and design"], ["ideogram", "Ideogram", "Images with readable text"]]],
   ["Voice and music", [["elevenlabs", "ElevenLabs", "Voice-over and voices"]]],
   ["Research and stock", [["youtube", "YouTube Data API", "Trends and competitor videos"], ["pexels", "Pexels", "Free stock photos and video"], ["tavily", "Tavily", "Web research"]]],
-  ["Publishing", [["postiz", "Postiz", "Posts to every connected page"]]],
+  ["Publishing", [["postiz", "Postiz", "Your scheduler. Paste as address|key, e.g. https://your-postiz|api-key"]]],
 ];
 const INSTALL = "curl -fsSL https://raw.githubusercontent.com/AhmedMasum2000000/meduza/main/server/install.sh | bash";
 const krow = (id, name, what) => `<div class="krow" data-k="${id}"><div class="grow"><div class="title">${esc(name)}</div><small>${esc(what)}</small></div>
@@ -237,6 +237,7 @@ const V = {
   social: () => { const pl = byPlatform();
     return `
     <div class="head"><div><h1>Schedule</h1><p class="lead">What's scheduled where. Amber slots are waiting on approval.</p></div><div class="hctl">${picker()}<a class="btn ghost" href="#/review">Open review</a></div></div>
+    <div id="pz"></div>
     ${pl.length ? `<div class="accts">${pl.map(([p, n]) => `<div class="panel"><span class="muted">${esc(p)}</span><b class="num">${n}</b><small class="muted">${n === 1 ? "page" : "pages"} connected</small></div>`).join("")}</div>
     <div class="panel"><h2>This week</h2><p class="muted" style="margin-top:6px">Nothing scheduled yet. Approved videos get a time slot here once the engine is posting. Where a platform has no posting API, Meduza prepares the file, caption and time for you to upload.</p></div>`
       : empty("No pages connected for " + esc(curName()) + " yet. Add pages to a brand to schedule posts.")}`; },
@@ -306,7 +307,27 @@ function celebrate() {
   const m = $(".medusa", d);
   if (calm) mood(m, "hearts"); else { setTimeout(() => mood(m, "wink"), 250); setTimeout(() => mood(m, "hearts"), 1150); }
 }
+// Schedule page: what Postiz has connected and queued, read through your server so the key never reaches the browser.
+const PZNAME = { "instagram-standalone": "Instagram", instagram: "Instagram", facebook: "Facebook", youtube: "YouTube", tiktok: "TikTok", x: "X", linkedin: "LinkedIn", "linkedin-page": "LinkedIn Page", threads: "Threads" };
+const PZSTATE = { QUEUE: ["Scheduled", "ready"], DRAFT: ["Draft", ""], PUBLISHED: ["Published", "ready"], ERROR: ["Failed", "review"] };
+async function postizPanel() {
+  const box = $("#pz"); if (!box) return;
+  const note = (msg, link) => `<div class="panel" style="margin-bottom:14px"><h2>Postiz</h2><p class="muted" style="margin-top:6px">${msg}</p>${link || ""}</div>`;
+  if (!online) { box.innerHTML = note("Connect your server in Admin, then add your Postiz address and key there to see real channels and scheduled posts here.", '<a class="btn ghost" style="margin-top:12px" href="#/admin">Open Admin</a>'); return; }
+  box.innerHTML = note("Checking Postiz…");
+  let d; try { d = await api("/api/postiz/overview"); } catch (e) { if ($("#pz") === box) box.innerHTML = note(esc(e.message), '<a class="btn ghost" style="margin-top:12px" href="#/admin">Open Admin</a>'); return; }
+  if ($("#pz") !== box) return;
+  const when = (iso) => { const x = new Date(iso); return isNaN(x) ? "" : x.toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); };
+  const posts = d.posts.slice().sort((a, b) => a.when.localeCompare(b.when));
+  box.innerHTML = `<div class="panel" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div><h2>Postiz</h2><p class="muted" style="margin-top:6px">${d.channels.length} ${d.channels.length === 1 ? "channel" : "channels"} connected, ${posts.length} ${posts.length === 1 ? "post" : "posts"} in the next 7 days.</p></div>
+      <a class="btn" href="${esc(d.url)}" target="_blank" rel="noopener">Open Postiz</a></div>
+    ${d.channels.map((c) => `<div class="row"><i class="dot ${c.disabled ? "off" : ""}"></i><div class="grow"><div class="title">${esc(c.name)}</div><small>${esc(PZNAME[c.platform] || c.platform)}${c.profile ? ", @" + esc(c.profile) : ""}${c.disabled ? ", needs reconnecting" : ""}</small></div></div>`).join("") || '<p class="muted" style="margin-top:12px">No channels connected in Postiz yet.</p>'}</div>
+    <div class="panel" style="margin-bottom:14px"><h2>Next 7 days in Postiz</h2>
+    ${posts.map((x) => { const [label, cls] = PZSTATE[x.state] || [x.state, ""]; return `<div class="row"><div class="grow"><div class="title">${esc(x.text) || "(no caption)"}</div><small>${esc(x.channel)}, ${esc(PZNAME[x.platform] || x.platform)}</small></div><span class="num muted">${esc(when(x.when))}</span><span class="chip ${cls}">${esc(label)}</span></div>`; }).join("") || '<p class="muted" style="margin-top:6px">Nothing scheduled or drafted.</p>'}</div>`;
+}
 const HOOKS = {
+  social: () => { postizPanel(); },
   admin: () => {
     const host = $("main");
     const paint = (id, k) => { const row = $(`[data-k="${id}"]`); if (!row) return; const st = $(".kst", row);

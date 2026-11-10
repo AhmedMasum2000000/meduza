@@ -33,6 +33,13 @@ const dec = (e) => {
   return Buffer.concat([d.update(Buffer.from(e.ct, "base64")), d.final()]).toString("utf8");
 };
 
+// Postiz is self-hosted, so its entry holds an address as well as a key, saved as "address|key".
+const pz = (k) => {
+  const i = k.indexOf("|"), u = (i < 0 ? "" : k.slice(0, i)).trim().replace(/\/+$/, ""), key = k.slice(i + 1).trim();
+  if (!/^https?:\/\/[^\s/|]+/.test(u) || !key) throw new Error("Save Postiz as address|key, for example https://your-postiz-address|your-api-key");
+  return { u, key, base: u + "/api/public/v1" };
+};
+
 // ---------- providers: how to check a key without spending money ----------
 const bearer = (k) => ({ Authorization: `Bearer ${k}` });
 const CHECK = {
@@ -53,7 +60,8 @@ const CHECK = {
   leonardo: (k) => ["https://cloud.leonardo.ai/api/rest/v1/me", bearer(k)],
   pexels: (k) => ["https://api.pexels.com/v1/curated?per_page=1", { Authorization: k }],
   youtube: (k) => [`https://www.googleapis.com/youtube/v3/videos?part=id&chart=mostPopular&maxResults=1&key=${encodeURIComponent(k)}`, {}],
-  kling: null, fal: null, ideogram: null, tavily: null, postiz: null,
+  postiz: (k) => { const p = pz(k); return [p.base + "/is-connected", { Authorization: p.key }]; },
+  kling: null, fal: null, ideogram: null, tavily: null,
 };
 const validId = (id) => Object.hasOwn(CHECK, id) || /^custom-[a-z0-9-]{1,40}$/.test(id);
 
@@ -201,6 +209,28 @@ Reply with only a JSON array, no other text: [{"title": "...", "why": "..."}]. W
       ideas = (Array.isArray(ideas) ? ideas : []).filter((x) => x && x.title).slice(0, 8).map((x) => ({ title: clip(x.title, 160), why: clip(x.why, 200) }));
       if (!ideas.length) return done(502, { error: "The AI answered in an unexpected format. Try again." });
       return done(200, { ideas, via: id });
+    }
+    // What Postiz has connected and what it will post in the next seven days. Read-only: Meduza never publishes through this.
+    if (path === "/api/postiz/overview" && m === "GET") {
+      const v = load("vault", {});
+      if (!v.postiz) return done(400, { error: "Add your Postiz address and key in Admin first." });
+      const p = pz(dec(v.postiz));
+      const get = async (q) => {
+        let r;
+        try { r = await fetch(p.base + q, { headers: { Authorization: p.key }, signal: AbortSignal.timeout(12000) }); }
+        catch { throw new Error("Can't reach Postiz from the server. Check its address and that the PC running it is on."); }
+        if (r.status === 401 || r.status === 403) throw new Error("Postiz rejected the key");
+        if (!r.ok) throw new Error("Postiz said HTTP " + r.status);
+        return r.json();
+      };
+      const day = new Date(); day.setUTCHours(0, 0, 0, 0);
+      const range = `startDate=${encodeURIComponent(day.toISOString())}&endDate=${encodeURIComponent(new Date(+day + 7 * 864e5).toISOString())}`;
+      const [ch, po] = await Promise.all([get("/integrations"), get("/posts?" + range)]);
+      const cut = (x, n) => String(x ?? "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, n);
+      return done(200, { url: p.u,
+        channels: (Array.isArray(ch) ? ch : []).slice(0, 100).map((c) => ({ id: cut(c.id, 60), name: cut(c.name, 80), platform: cut(c.identifier, 40), profile: cut(c.profile, 80), disabled: !!c.disabled })),
+        posts: (Array.isArray(po?.posts) ? po.posts : []).slice(0, 200).map((x) => ({ id: cut(x.id, 60), when: cut(x.publishDate, 40), state: cut(x.state, 20), text: cut(x.content, 140),
+          channel: cut(x.integration?.name, 80), platform: cut(x.integration?.providerIdentifier, 40) })) });
     }
     return done(404, { error: "Not found" });
   } catch (e) {
