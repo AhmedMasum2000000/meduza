@@ -3,6 +3,7 @@ const LINKS = {
   panel: "", // set to your control panel / war room address
   vpsRepo: "https://github.com/AhmedMasum2000000/hostingervps",
   engineRepo: "https://github.com/AhmedMasum2000000/meduza-engine",
+  postiz: "http://localhost:4007", // Postiz on the studio PC; change to its public address once the tunnel exists
 };
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -177,7 +178,11 @@ const V = {
       <div><h2>${n}</h2><p class="muted">${lang}. ${lane}.</p></div><div style="width:110px">${tide(12, i + 2)}<small class="muted">this week</small></div></div>`).join("")}</div>`,
 
   social: () => `
-    <div class="head"><div><h1>Social</h1><p class="lead">What's scheduled where. Amber slots are waiting on approval.</p></div></div>
+    <div class="head"><div><h1>Social</h1><p class="lead">What's scheduled where. Amber slots are waiting on approval.</p></div>
+      <a class="btn" data-link="postiz">Open Postiz</a></div>
+    <div class="panel" style="margin-bottom:14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap"><i class="dot"></i>
+      <div class="grow" style="flex:1;min-width:220px"><b>Publishing runs on Postiz</b><p class="muted">Self-hosted on the studio PC. It opens from that PC only until its public address is set. The calendar below is sample data.</p></div>
+      <a class="btn ghost" data-link="postiz">Schedule a post</a></div>
     <div class="panel"><div class="slots"><span></span>${["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => `<span>${d}</span>`).join("")}
       ${["YouTube", "Instagram", "Facebook", "LinkedIn", "TikTok"].map((p, r) => `<span style="color:var(--ink)">${p}</span>${Array.from({ length: 7 }, (_, c) => `<i class="${(r * 3 + c * 5) % 7 < 4 ? "f" : (r + c) % 5 === 0 ? "h" : ""}"></i>`).join("")}`).join("")}</div>
       <p class="muted" style="margin-top:16px">TikTok is posted by hand. Meduza prepares the file, caption and time.</p></div>`,
@@ -189,7 +194,7 @@ const V = {
     <div class="panel" style="margin-bottom:16px"><h2>Pipeline</h2><p class="muted">Items at each stage right now.</p>
       <div class="river">${[["Research", 2], ["Evidence", 1], ["Script", 3, "busy"], ["Fact-check", 2, "hot"], ["Voice", 0], ["Render", 1, "busy"], ["Reels", 4], ["Package", 0], ["Approval", 5]].map(([n, c, k = ""]) => `<div class="${k}"><b class="num">${c}</b>${n}</div>`).join("")}</div></div>
     <div class="grid g3">
-      <div class="panel"><h2>Services</h2><p class="muted">On the server.</p>${[["Postiz", "Publishing", ""], ["Temporal", "Job runner", ""], ["Postgres", "Database", ""], ["Redis", "Queue", ""], ["n8n", "Paused", "amber"]].map(([n, d, c]) => `<div class="row"><i class="dot ${c}"></i><div class="grow"><div class="title">${n}</div></div><small>${d}</small></div>`).join("")}</div>
+      <div class="panel"><h2>Services</h2><p class="muted">Postiz runs on the studio PC.</p>${[["Postiz", "Publishing", ""], ["Temporal", "Job runner", ""], ["Postgres", "Database", ""], ["Redis", "Queue", ""], ["n8n", "Paused", "amber"]].map(([n, d, c]) => `<div class="row"><i class="dot ${c}"></i><div class="grow"><div class="title">${n === "Postiz" ? `<a data-link="postiz" style="cursor:pointer">Postiz</a>` : n}</div></div><small>${d}</small></div>`).join("")}</div>
       <div class="panel"><h2>Spend this month</h2><p class="muted">Hard stop at 18 dollars.</p><b class="num" style="font:650 2.6rem var(--display)">$<span data-count="7.40">7.40</span></b>
         <div class="meter" style="margin:14px 0 8px"><i style="--v:37%"></i></div><small class="muted">Scripts 4.10, fact-check 1.70, search 1.20, the rest 0.40</small></div>
       <div class="panel"><h2>Needs attention</h2><p class="muted">Newest first.</p>
