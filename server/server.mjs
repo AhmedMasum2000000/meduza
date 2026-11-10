@@ -40,6 +40,16 @@ const pz = (k) => {
   return { u, key, base: u + "/api/public/v1" };
 };
 
+// One request to Postiz's public API, with errors a person can act on.
+async function pzCall(p, q, method = "GET") {
+  let r;
+  try { r = await fetch(p.base + q, { method, headers: { Authorization: p.key }, signal: AbortSignal.timeout(12000) }); }
+  catch { throw new Error("Can't reach Postiz from the server. Check its address and that the PC running it is on."); }
+  if (r.status === 401 || r.status === 403) throw new Error("Postiz rejected the key");
+  if (!r.ok) { const e = new Error("Postiz said HTTP " + r.status); e.status = r.status; throw e; }
+  return r.json().catch(() => ({}));
+}
+
 // ---------- providers: how to check a key without spending money ----------
 const bearer = (k) => ({ Authorization: `Bearer ${k}` });
 const CHECK = {
@@ -215,14 +225,7 @@ Reply with only a JSON array, no other text: [{"title": "...", "why": "..."}]. W
       const v = load("vault", {});
       if (!v.postiz) return done(400, { error: "Add your Postiz address and key in Admin first." });
       const p = pz(dec(v.postiz));
-      const get = async (q) => {
-        let r;
-        try { r = await fetch(p.base + q, { headers: { Authorization: p.key }, signal: AbortSignal.timeout(12000) }); }
-        catch { throw new Error("Can't reach Postiz from the server. Check its address and that the PC running it is on."); }
-        if (r.status === 401 || r.status === 403) throw new Error("Postiz rejected the key");
-        if (!r.ok) throw new Error("Postiz said HTTP " + r.status);
-        return r.json();
-      };
+      const get = (q) => pzCall(p, q);
       const day = new Date(); day.setUTCHours(0, 0, 0, 0);
       const range = `startDate=${encodeURIComponent(day.toISOString())}&endDate=${encodeURIComponent(new Date(+day + 7 * 864e5).toISOString())}`;
       const [ch, po] = await Promise.all([get("/integrations"), get("/posts?" + range)]);
@@ -231,6 +234,24 @@ Reply with only a JSON array, no other text: [{"title": "...", "why": "..."}]. W
         channels: (Array.isArray(ch) ? ch : []).slice(0, 100).map((c) => ({ id: cut(c.id, 60), name: cut(c.name, 80), platform: cut(c.identifier, 40), profile: cut(c.profile, 80), disabled: !!c.disabled })),
         posts: (Array.isArray(po?.posts) ? po.posts : []).slice(0, 200).map((x) => ({ id: cut(x.id, 60), when: cut(x.publishDate, 40), state: cut(x.state, 20), text: cut(x.content, 140),
           channel: cut(x.integration?.name, 80), platform: cut(x.integration?.providerIdentifier, 40) })) });
+    }
+    // Start a social login in Postiz, or remove a connected channel. Removing also deletes that channel's scheduled posts in Postiz.
+    const pm = path.match(/^\/api\/postiz\/(connect|channels)\/([a-z0-9-]{1,40})$/);
+    if (pm) {
+      const v = load("vault", {});
+      if (!v.postiz) return done(400, { error: "Add your Postiz address and key in Admin first." });
+      const p = pz(dec(v.postiz));
+      const noKeys = "Postiz can't start that login yet. This platform's app keys are probably not set in Postiz.";
+      if (pm[1] === "connect" && m === "POST") {
+        const b = await readBody(req), again = /^[a-z0-9-]{1,60}$/i.test(b.refresh || "") ? "?refresh=" + b.refresh : "";
+        let out;
+        try { out = await pzCall(p, `/social/${pm[2]}${again}`); }
+        catch (e) { if ([400, 404, 500].includes(e.status)) throw new Error(noKeys); throw e; }
+        const url = String(out.url || "");
+        if (!/^https:\/\/[^\s]+$/.test(url)) throw new Error(noKeys);
+        return done(200, { url });
+      }
+      if (pm[1] === "channels" && m === "DELETE") { await pzCall(p, `/integrations/${pm[2]}`, "DELETE"); return done(200, { ok: true }); }
     }
     return done(404, { error: "Not found" });
   } catch (e) {

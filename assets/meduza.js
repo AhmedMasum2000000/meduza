@@ -18,6 +18,7 @@ const icons = {
   ideas: "M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z",
   analytics: "M4 20V10M10 20V4M16 20v-7M22 20H2",
   brands: "M4 21V7l8-4 8 4v14M9 21v-6h6v6M9 10h.01M15 10h.01",
+  accounts: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM19 8v6M22 11h-6",
   social: "M18 8a3 3 0 1 0-2.8-4M6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4",
   war: "M12 3 4 6v6c0 5 3.4 8 8 9 4.6-1 8-4 8-9V6zM12 8v5M12 16h.01",
   review: "M9 12l2 2 4-4M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
@@ -28,7 +29,7 @@ const ico = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 const GROUPS = [
   ["Create", "Make videos from footage or a script.", [["studio", "New video", "A few choices, then the engine takes over"], ["editor", "Editor", "Pin a note to any moment"]]],
   ["Curate", "Pick what to make. Approve what goes out.", [["ideas", "Ideas", "Topics pulled from what is working"], ["review", "Review", "Approve or send back"], ["videos", "Library", "Everything finished"]]],
-  ["Brands and socials", "Every brand, its pages and its schedule.", [["brands", "Brands", "Every brand and its pages"], ["social", "Schedule", "What posts where, and when"], ["analytics", "Analytics", "Where viewers stay or leave"]]],
+  ["Brands and socials", "Every brand, its pages and its schedule.", [["brands", "Brands", "Every brand and its pages"], ["accounts", "Accounts", "Log in to socials and file them by brand"], ["social", "Schedule", "What posts where, and when"], ["analytics", "Analytics", "Where viewers stay or leave"]]],
   ["Run", "Server, API keys, pipeline and spend.", [["war", "War room", "Health and money on one screen"], ["admin", "Admin", "API keys and your server"]]],
 ];
 const PLATFORMS = ["Instagram", "Facebook", "YouTube", "TikTok", "X", "LinkedIn", "Threads", "Pinterest", "Bluesky", "Snapchat", "Website", "Other"];
@@ -234,6 +235,11 @@ const V = {
     ${niches.length > 1 ? `<div class="chips" id="nf"><button class="chip on" data-n="">All niches</button>${niches.map((n) => `<button class="chip" data-n="${esc(n)}">${esc(n)}</button>`).join("")}</div>` : ""}
     <div class="grid g2" id="bl">${WS.brands.map(brandCard).join("") || `<div class="emptyc"><p>No brands yet. Add your first one: any niche, any language.</p><button class="btn" data-act="new">Add brand</button></div>`}</div>`; },
 
+  accounts: () => `
+    <div class="head"><div><h1>Accounts</h1><p class="lead">Log in to a social account once, then keep it under the brand it belongs to.</p></div>
+      <div class="hctl"><input class="field" id="afind" type="search" placeholder="Find a brand" aria-label="Find a brand" style="width:220px;height:42px"><button class="btn ghost" data-a="refresh">Refresh</button></div></div>
+    <div id="acc"></div>`,
+
   social: () => { const pl = byPlatform();
     return `
     <div class="head"><div><h1>Schedule</h1><p class="lead">What's scheduled where. Amber slots are waiting on approval.</p></div><div class="hctl">${picker()}<a class="btn ghost" href="#/review">Open review</a></div></div>
@@ -326,7 +332,66 @@ async function postizPanel() {
     <div class="panel" style="margin-bottom:14px"><h2>Next 7 days in Postiz</h2>
     ${posts.map((x) => { const [label, cls] = PZSTATE[x.state] || [x.state, ""]; return `<div class="row"><div class="grow"><div class="title">${esc(x.text) || "(no caption)"}</div><small>${esc(x.channel)}, ${esc(PZNAME[x.platform] || x.platform)}</small></div><span class="num muted">${esc(when(x.when))}</span><span class="chip ${cls}">${esc(label)}</span></div>`; }).join("") || '<p class="muted" style="margin-top:6px">Nothing scheduled or drafted.</p>'}</div>`;
 }
+// Accounts page: social logins live in Postiz; which brand each belongs to lives in the workspace (WS.links).
+const SOC = [["Short video", [["instagram-standalone", "Instagram"], ["tiktok", "TikTok"], ["youtube", "YouTube"]]], ["Social", [["facebook", "Facebook Page"], ["x", "X"], ["threads", "Threads"]]], ["Professional", [["linkedin-page", "LinkedIn Page"], ["pinterest", "Pinterest"]]]];
+const ALIAS = { instagram: "instagram-standalone", linkedin: "linkedin-page" };
+const catOf = (pf) => (SOC.find(([, l]) => l.some(([id]) => id === (ALIAS[pf] || pf))) || ["Other"])[0];
+let ACC = null, accErr = "";
+function accountsPage() {
+  const box = $("#acc"); if (!box) return; WS.links ||= {};
+  const admin = '<a class="btn ghost" style="margin-top:12px" href="#/admin">Open Admin</a>';
+  const note = (msg, extra = "") => `<div class="panel"><p class="muted">${msg}</p>${extra}</div>`;
+  const draw = () => {
+    if (!online) { box.innerHTML = note("Connect your server in Admin, then add your Postiz address and key there. Logins happen in Postiz, so passwords never touch this site.", admin); return; }
+    if (accErr) { box.innerHTML = note(esc(accErr), admin); return; }
+    if (!ACC) { box.innerHTML = note("Loading your accounts…"); return; }
+    if (!WS.brands.length) { box.innerHTML = note("Add a brand first, so each account has somewhere to live.", '<a class="btn" style="margin-top:12px" href="#/brands">Add a brand</a>'); return; }
+    const find = ($("#afind")?.value || "").trim().toLowerCase(), target = B(WS.accBrand) ? WS.accBrand : WS.brands[0].id;
+    const opts = (sel) => `<option value="">Not filed</option>${WS.brands.map((b) => `<option value="${b.id}"${b.id === sel ? " selected" : ""}>${esc(b.name)}</option>`).join("")}`;
+    const row = (c) => `<div class="row arow" data-c="${esc(c.id)}"><i class="dot ${c.disabled ? "off" : ""}"></i><div class="grow"><div class="title">${esc(c.name)}</div><small>${esc(PZNAME[c.platform] || c.platform)}${c.profile ? ", @" + esc(c.profile) : ""}${c.disabled ? ". Needs logging in again" : ""}</small></div>
+      <select class="field" data-a="move" aria-label="Brand for ${esc(c.name)}">${opts(B(WS.links[c.id]) ? WS.links[c.id] : "")}</select>
+      <button class="btn ghost" data-a="again" data-p="${esc(c.platform)}">Log in again</button><button class="btn ghost" data-a="remove">Remove</button></div>`;
+    const cats = (list) => [...SOC.map(([n]) => n), "Other"].map((n) => { const l = list.filter((c) => catOf(c.platform) === n); return l.length ? `<p class="cat">${n}</p>${l.map(row).join("")}` : ""; }).join("");
+    const loose = ACC.filter((c) => !B(WS.links[c.id]));
+    const shown = WS.brands.filter((b) => !find || b.name.toLowerCase().includes(find));
+    box.innerHTML = `<div class="panel" style="margin-bottom:14px"><h2>Add an account</h2>
+        <div class="cgrid"><span class="muted">1. Put it under</span><div class="btns"><select class="field" data-a="target" aria-label="Brand for new logins" style="width:auto;max-width:260px">${WS.brands.map((b) => `<option value="${b.id}"${b.id === target ? " selected" : ""}>${esc(b.name)}</option>`).join("")}</select></div>
+        ${SOC.map(([n, l], i) => `<span class="muted">${i ? "" : "2. Log in to"}</span><div class="btns"><span class="cat" style="margin:0;min-width:92px">${n}</span>${l.map(([id, name]) => `<button class="btn ghost" data-a="connect" data-p="${id}">${name}</button>`).join("")}</div>`).join("")}</div>
+        <p class="muted" style="margin-top:14px">The login opens in a new tab. When you finish there, come back here and the account appears under the brand you chose.</p></div>
+      ${loose.length ? `<div class="panel" style="margin-bottom:14px"><h2>Not filed yet</h2><p class="muted" style="margin-top:6px">Pick a brand for each of these.</p>${cats(loose)}</div>` : ""}
+      ${shown.map((b) => { const mine = ACC.filter((c) => WS.links[c.id] === b.id), sw = SWATCH[b.c % SWATCH.length];
+        return `<div class="panel" style="margin-bottom:14px"><div style="display:flex;align-items:center;gap:12px"><span class="swatch" style="background:linear-gradient(150deg,${sw[0]},${sw[1]})"></span><div class="grow" style="flex:1"><h2>${esc(b.name)}</h2><small class="muted">${esc(b.niche || "")}${b.lang ? ", " + esc(b.lang) : ""}</small></div><span class="chip">${mine.length} ${mine.length === 1 ? "account" : "accounts"}</span></div>
+          ${cats(mine) || '<p class="muted" style="margin-top:12px">No accounts under this brand yet.</p>'}</div>`; }).join("") || note("No brand matches that name.")}`;
+  };
+  const load = async () => { accErr = "";
+    try { const d = await api("/api/postiz/overview"), pend = JSON.parse(sessionStorage.getItem("meduzaPend") || "null");
+      if (pend && B(pend.brand)) { let n = 0; d.channels.forEach((c) => { if (!pend.known.includes(c.id) && !WS.links[c.id]) { WS.links[c.id] = pend.brand; n++; } });
+        if (n) { sessionStorage.removeItem("meduzaPend"); save(); toast(`Added under ${B(pend.brand).name}`); } }
+      ACC = d.channels; } catch (e) { accErr = e.message; }
+    if ($("#acc") === box) draw(); };
+  const login = async (platform, refresh) => {
+    const tab = window.open("", "_blank"); // opened now, while the click still counts, then pointed at the login
+    try { const d = await api("/api/postiz/connect/" + platform, { method: "POST", body: refresh ? { refresh } : {} });
+      if (!refresh) sessionStorage.setItem("meduzaPend", JSON.stringify({ brand: $("[data-a=target]")?.value || WS.brands[0].id, known: (ACC || []).map((c) => c.id) }));
+      if (tab) tab.location = d.url; else location.href = d.url;
+    } catch (e) { tab?.close(); toast(e.message); } };
+  const host = $("main");
+  host.onclick = async (e) => { const t = e.target.closest("[data-a]"); if (!t || t.tagName === "SELECT") return; const a = t.dataset.a, id = t.closest("[data-c]")?.dataset.c;
+    if (a === "refresh") { ACC = null; draw(); load(); }
+    else if (a === "connect") login(t.dataset.p);
+    else if (a === "again") login(t.dataset.p, id);
+    else if (a === "remove") { if (!t.dataset.sure) { t.dataset.sure = "1"; t.textContent = "Tap again to remove"; setTimeout(() => { if (t.isConnected) { delete t.dataset.sure; t.textContent = "Remove"; } }, 3000); return; }
+      try { await api("/api/postiz/channels/" + id, { method: "DELETE" }); delete WS.links[id]; save(); ACC = ACC.filter((c) => c.id !== id); draw(); toast("Account removed"); } catch (err) { toast(err.message); } } };
+  host.onchange = (e) => { const t = e.target.closest("[data-a]"); if (!t) return;
+    if (t.dataset.a === "target") { WS.accBrand = t.value; save(); }
+    else if (t.dataset.a === "move") { const id = t.closest("[data-c]").dataset.c; if (t.value) WS.links[id] = t.value; else delete WS.links[id]; save(); draw(); } };
+  $("#afind").oninput = draw;
+  const back = () => { if (sessionStorage.getItem("meduzaPend") && $("#acc") === box) load(); };
+  addEventListener("focus", back); stop = () => removeEventListener("focus", back);
+  draw(); if (online) load();
+}
 const HOOKS = {
+  accounts: () => { accountsPage(); },
   social: () => { postizPanel(); },
   admin: () => {
     const host = $("main");

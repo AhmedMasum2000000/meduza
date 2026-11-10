@@ -310,11 +310,17 @@ select.field { color: var(--ink); background-color: #0f1011; } select.field opti
 .soc .x { border: 0; background: none; color: var(--muted); padding: 0 0 0 4px; font-size: 15px; line-height: 1; }
 .soc .x:hover { color: var(--ink); }
 .soc.pick { cursor: pointer; } .soc.pick input { accent-color: var(--yellow); }
+.cgrid { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 10px 16px; align-items: center; margin-top: 14px; }
+.cgrid .btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cat { font-size: 12.5px; color: var(--muted); margin: 14px 0 2px; }
+.arow { flex-wrap: wrap; } .arow .grow { min-width: 160px; }
+.arow .field { height: 34px; width: auto; max-width: 170px; padding: 0 8px; } .arow .btn { height: 34px; padding: 0 12px; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .chips .chip { border: 0; cursor: pointer; } .chips .chip.on { background: var(--yellow); color: #0a0a0b; }
 .btn.danger:hover { color: #ff7a6b; }
 [hidden] { display: none !important; }
 @media (max-width: 900px) {
+  .cgrid { grid-template-columns: minmax(0, 1fr); gap: 6px; }
   #nav { width: min(84vw, 300px); transform: translateX(-102%); transition: transform .25s ease; box-shadow: 20px 0 40px rgba(0,0,0,.5); }
   .menu-open #nav { transform: none; }
   .menu-btn { display: inline-flex; align-items: center; height: 34px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); font-weight: 600; }
