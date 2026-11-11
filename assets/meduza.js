@@ -26,8 +26,10 @@ const icons = {
 };
 const ico = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="${icons[n]}"/></svg>`;
 // Every page, grouped by what you are doing. Drives the sidebar and the home page.
+const editorWorkspace = "http://127.0.0.1:18465/#/home";
+const menuHref = (id) => id === "editor" ? editorWorkspace : "#/" + id;
 const GROUPS = [
-  ["Create", "Make videos from footage or a script.", [["studio", "New video", "A few choices, then the engine takes over"], ["editor", "Editor", "Pin a note to any moment"]]],
+  ["Create", "Make videos from footage or a script.", [["studio", "New video", "A few choices, then the engine takes over"], ["editor", "Editor", "Open snakeitbaby, the media library, and Telegram inbox"]]],
   ["Curate", "Pick what to make. Approve what goes out.", [["ideas", "Ideas", "Topics pulled from what is working"], ["review", "Review", "Approve or send back"], ["videos", "Library", "Everything finished"]]],
   ["Brands and socials", "Every brand, its pages and its schedule.", [["brands", "Brands", "Every brand and its pages"], ["accounts", "Accounts", "Log in to socials and file them by brand"], ["social", "Schedule", "What posts where, and when"], ["analytics", "Analytics", "Where viewers stay or leave"]]],
   ["Run", "Server, API keys, pipeline and spend.", [["war", "War room", "Health and money on one screen"], ["admin", "Admin", "API keys and your server"]]],
@@ -152,7 +154,7 @@ const V = {
   home: () => `
     <div class="reel">
       <a class="feature" href="#/studio"><div class="shot a1"><span class="medusa inv" style="--s:78%;position:absolute;left:11%;top:-6%"><i class="art"></i></span></div><h2>Studio<span class="badge">New</span></h2><p>Raw file or script in, finished cut out</p></a>
-      <a class="feature" href="#/editor"><div class="shot a2"></div><h2>Editor</h2><p>Pin a note to any frame, get a new version</p></a>
+      <a class="feature" href="${editorWorkspace}"><div class="shot a2"></div><h2>Editor</h2><p>Open snakeitbaby and your media library</p></a>
       <a class="feature" href="#/war"><div class="shot a3"></div><h2>War room</h2><p>Server, pipeline and spend on one screen</p></a>
       <a class="feature" href="#/brands"><div class="shot a4"></div><h2>Brands</h2><p>Any niche, any number of pages</p></a>
     </div>
@@ -162,7 +164,7 @@ const V = {
         <p class="lead">Meduza writes, voices, cuts and packages for every brand you run, on every platform. Nothing goes out until you say so.</p>
         <a class="btn" href="#/studio">Start a new cut</a></div></section>
       <div class="hub">${GROUPS.map(([g, d, items]) => `<section class="hubc"><h2>${g}</h2><p class="muted">${d}</p>
-        <div class="hubl">${items.map(([id, t, s]) => `<a href="#/${id}">${ico(id)}<span><b>${t}</b><small>${s}</small></span></a>`).join("")}</div></section>`).join("")}</div>
+        <div class="hubl">${items.map(([id, t, s]) => `<a href="${menuHref(id)}">${ico(id)}<span><b>${t}</b><small>${s}</small></span></a>`).join("")}</div></section>`).join("")}</div>
     </div>
     <div class="grid g4" style="margin-bottom:14px">
       ${[[WS.brands.length, "brands"], [pageCount(), "pages"], [new Set(WS.brands.flatMap((b) => b.pages.map(([p]) => p))).size, "platforms"], [new Set(WS.brands.map((b) => b.niche.toLowerCase())).size, "niches"]].map(([n, l], i) =>
@@ -196,7 +198,8 @@ const V = {
         <p class="muted" style="margin-top:10px">It joins the queue. The engine picks it up as soon as it is connected to your server.</p></div></div>
     </div>`,
 
-  editor: () => { const x = job(sessionStorage.getItem("meduzaJob")) || mine(JOBS())[0]?.[6];
+  editor: () => `<div class="head"><div><h1>Editor</h1><p class="lead">Open snakeitbaby, the media library, Telegram inbox, and exports on this PC.</p></div><a class="btn" href="${editorWorkspace}">Open snakeitbaby</a></div><section class="panel"><h2>Start the local workspace</h2><p>Use the Meduza Studio desktop shortcut if the editor is offline.</p></section>`,
+  "video-details": () => { const x = job(sessionStorage.getItem("meduzaJob")) || mine(JOBS())[0]?.[6];
     if (!x) return `<div class="head"><div><h1>Editor</h1><p class="lead">Open a video to see its details and tell the engine what to change.</p></div></div>${empty("No videos yet. Make one in Studio first.").replace("#/brands", "#/studio").replace("Go to Brands", "New video")}`;
     const b = B(x.b);
     return `
@@ -216,7 +219,7 @@ const V = {
   videos: () => { const q = mine(JOBS()); return `
     <div class="head"><div><h1>Library</h1><p class="lead">Every video you've made, newest first.</p></div><div class="hctl">${picker()}</div></div>
     ${q.length ? `<div class="masonry">${q.map((it, i) => { const b = B(it[1]), tall = i % 3 !== 0;
-      return `<a class="tile" href="#/editor" data-job="${it[6].id}" style="--a:${col(b)[0]}55;--b:${col(b)[1]};--ar:${tall ? "9/14" : "16/10"}"><span class="chip ${it[4]}">${it[5]}</span><b>${esc(it[0])}</b><small class="muted">${esc(b.name)}, ${it[3]}</small></a>`; }).join("")}</div>` : empty("No videos for " + esc(curName()) + " yet. Make one in Studio.").replace("#/brands", "#/studio").replace("Go to Brands", "New video")}`; },
+      return `<a class="tile" href="#/video-details" data-job="${it[6].id}" style="--a:${col(b)[0]}55;--b:${col(b)[1]};--ar:${tall ? "9/14" : "16/10"}"><span class="chip ${it[4]}">${it[5]}</span><b>${esc(it[0])}</b><small class="muted">${esc(b.name)}, ${it[3]}</small></a>`; }).join("")}</div>` : empty("No videos for " + esc(curName()) + " yet. Make one in Studio.").replace("#/brands", "#/studio").replace("Go to Brands", "New video")}`; },
 
   ideas: () => `
     <div class="head"><div><h1>Content ideas</h1><p class="lead">Ideas written by your AI for each brand, with the reason each might land.</p></div><div class="hctl">${picker()}<button class="btn" data-find>Find ideas with AI</button></div></div>
@@ -253,7 +256,7 @@ const V = {
     <div class="head"><div><h1>Review</h1><p class="lead">Nothing goes out until you approve it. Flagged items come first.</p></div>${picker()}</div>
     <div class="panel" id="rq">${mine(JOBS()).filter((r) => r[6].status === "review").map(([t, id, k, , , , x]) => `<div class="row" data-job="${x.id}">${sw(B(id))}
       <div class="grow"><div class="title">${esc(t)}</div><small>${esc(B(id).name)}, ${k.toLowerCase()}${x.flag ? ` · <span class="y">${esc(x.flag)}</span>` : ""}</small></div>
-      <a class="btn ghost" href="#/editor">Open</a><button class="btn" data-ok>Approve</button></div>`).join("") || '<p class="muted">All caught up. Nothing waiting on you. Finished videos land here for your approval before anything goes out.</p>'}</div>`,
+      <a class="btn ghost" href="#/video-details">Open</a><button class="btn" data-ok>Approve</button></div>`).join("") || '<p class="muted">All caught up. Nothing waiting on you. Finished videos land here for your approval before anything goes out.</p>'}</div>`,
 
   admin: () => `
     <div class="head"><div><h1>Admin</h1><p class="lead">Connect your server, then add the keys Meduza uses. Keys go straight to your server and are stored there encrypted. They are never kept in this browser or in GitHub, and the site can't read them back.</p></div></div>
@@ -511,11 +514,11 @@ const HOOKS = {
       if (!on.length) return toast("Pick at least one page");
       const x = { id: "v" + Date.now().toString(36), t, b: b.id, kind: pick("kind"), status: "queued", created: Date.now(), pages: on, src: pick("src"), foot: $("#foot").value.trim(), ref: $("#ref").value.trim(),
         look: $(".look.on b")?.textContent || pick("look"), cap: pick("cap"), music: pick("music"), notes: $("#vn").value.trim() };
-      WS.jobs = [x, ...(WS.jobs || [])]; save(); sessionStorage.setItem("meduzaJob", x.id); toast("Queued. The engine starts it once it's connected."); location.hash = "#/editor";
+      WS.jobs = [x, ...(WS.jobs || [])]; save(); sessionStorage.setItem("meduzaJob", x.id); toast("Queued. The engine starts it once it's connected."); location.hash = "#/video-details";
     };
     $("#looks").onclick = (e) => { const l = e.target.closest(".look"); if (l) $$(".look").forEach((o) => o.classList.toggle("on", o === l)); };
   },
-  editor: () => {
+  "video-details": () => {
     $("main").onclick = (e) => { const t = e.target.closest("[data-act]"); if (!t) return; const x = job(t.closest("[data-jid]")?.dataset.jid); if (!x) return;
       if (t.dataset.act === "save-notes") { x.notes = $("#jn").value.trim(); save(); toast("Notes saved"); }
       if (t.dataset.act === "del-job") { if (!t.dataset.sure) { t.dataset.sure = "1"; t.textContent = "Tap again to delete"; return; } WS.jobs = WS.jobs.filter((y) => y !== x); sessionStorage.removeItem("meduzaJob"); save(); toast("Video deleted"); location.hash = "#/videos"; } };
@@ -535,7 +538,7 @@ function go() {
   $$("[data-toast]").forEach((b) => (b.onclick = () => toast(b.dataset.toast)));
 }
 $("#nav").innerHTML = `<div class="ng"><a href="#/home" data-id="home">${ico("home")}Home</a></div>` + GROUPS.map(([g, , items]) =>
-  `<div class="ng"><small>${g}</small>${items.map(([id, t]) => `<a href="#/${id}" data-id="${id}">${ico(id)}${t}</a>`).join("")}</div>`).join("");
+  `<div class="ng"><small>${g}</small>${items.map(([id, t]) => `<a href="${menuHref(id)}" data-id="${id}">${ico(id)}${t}</a>`).join("")}</div>`).join("");
 function setMenu(open) { document.body.classList.toggle("menu-open", open); $("#menu").setAttribute("aria-expanded", String(open)); $("#scrim").hidden = !open; if (open) $("#nav a.on, #nav a")?.focus(); }
 $("#menu").onclick = () => setMenu(!document.body.classList.contains("menu-open"));
 $("#scrim").onclick = () => setMenu(false);
