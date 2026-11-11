@@ -12,6 +12,16 @@ Use Node.js and Bun 1.2.18. From the repository root, run:
 
 Open http://localhost:3000/snakeitbaby/. Set `NEXT_PUBLIC_BASE_PATH=/meduza/snakeitbaby` and run `bun run build` for Meduza Pages. Copy the contents of `apps/web/out` to the repository-root `snakeitbaby/` folder. Run `bun run build` without that setting in the same directory to generate the static site in `apps/web/out`. The default URL prefix is `/snakeitbaby`. Set `NEXT_PUBLIC_BASE_PATH` at build time if your host uses another prefix, or set it to an empty string for a site at the domain root.
 
+## Back up and restore projects
+
+In an open project, choose **Back up project** to download a `.snakeitbaby` file containing the timeline and imported media. On the Projects page, choose **Restore project** and select that file. Restore creates a separate project. Use the same editor project version on the other device.
+
+## Release smoke test
+
+Build with `NEXT_PUBLIC_BASE_PATH=/meduza/snakeitbaby`, then run `python qa/pages-assets.py apps/web/out` from the source root to make Next.js navigation assets available on GitHub Pages. Publish the resulting directory.
+
+For the browser test, install FFmpeg and ffprobe on your PATH. Run `npm install --prefix qa --no-save --no-package-lock playwright@1.65.0` and `npx --prefix qa playwright install chromium`. Run `node qa/smoke.mjs apps/web/out`. You can set `SNAKEITBABY_BROWSER` to the path of an installed Chrome binary. The test uses a fresh headless profile and a generated clip.
+
 ## Connect an AI server
 
 Open a project and select **AI tools**. Enter the HTTPS base URL of a server you control, for example `https://ai.example.com/editor`. If the server requires it, enter its access token. This token stays in memory while the editor is open. Keep paid provider credentials on the server. The optional **Model** field is passed to the server, which can select any model it supports.
