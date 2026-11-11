@@ -26,7 +26,7 @@ const icons = {
 };
 const ico = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="${icons[n]}"/></svg>`;
 // Every page, grouped by what you are doing. Drives the sidebar and the home page.
-const editorWorkspace = "./snakeitbaby/";
+const editorWorkspace = "https://ahmedmasum2000000.github.io/snakeitbaby/";
 const menuHref = (id) => id === "editor" ? editorWorkspace : "#/" + id;
 const GROUPS = [
   ["Create", "Make videos from footage or a script.", [["studio", "New video", "A few choices, then the engine takes over"], ["editor", "Editor", "Edit videos in your browser"]]],

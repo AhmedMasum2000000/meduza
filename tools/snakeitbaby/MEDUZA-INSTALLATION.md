@@ -1,12 +1,6 @@
-# snakeitbaby on GitHub Pages
+# Local Meduza editor
 
-Open **Editor** in Meduza, create a project, and use **Import** in the Media panel to add files. Projects and imported media are stored in the browser profile for the GitHub Pages site. Export downloads a video to your device. Files synced from cloud drives can be selected in the file picker.
-
-GitHub Pages serves the static editor. Direct Telegram downloads, shared Drive link downloads, and indexing PC folders require the local media service described below.
-
-To rebuild the published bundle, copy the `opencut` source directory to a disposable build directory. Run `python prepare-pages.py <build-directory>` with that copy as the argument. In the copy, install dependencies with Bun 1.2.18 using `bun install --frozen-lockfile`. From its `apps/web` directory run `bun run build`, then publish the contents of `apps/web/out` to `snakeitbaby/` at the repository root. Keep `.nojekyll` so GitHub Pages serves the generated assets.
-
-## Optional local workspace
+The public edition is published separately at https://github.com/AhmedMasum2000000/snakeitbaby. This directory contains the optional local editor and media service.
 
 The **Meduza Studio** desktop shortcut starts the local services. The workspace includes snakeitbaby, projects, the media library, Telegram inbox, and exports.
 
