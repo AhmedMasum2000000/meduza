@@ -1,0 +1,16 @@
+{
+  "name": "Snakeitbaby Editor",
+  "short_name": "snakeitbaby",
+  "description": "Open-source browser video editor",
+  "display": "standalone",
+  "start_url": "./projects/",
+  "background_color": "#0a0a0b",
+  "theme_color": "#ffd400",
+  "icons": [
+    {
+      "src": "./meduza.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}
