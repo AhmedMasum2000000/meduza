@@ -14,6 +14,7 @@ import Link from "next/link";
 import { RenameProjectDialog } from "@/project/components/rename-project-dialog";
 import { DeleteProjectDialog } from "@/project/components/delete-project-dialog";
 import { useRouter } from "next/navigation";
+import { downloadProjectBackup } from "@/project/backup";
 import { AiTools } from "./ai-tools";
 import { ExportButton } from "./export-button";
 import { ThemeToggle } from "../theme-toggle";
@@ -28,6 +29,7 @@ import { cn } from "@/utils/ui";
 
 export function EditorHeader() {
 	const editor = useEditor();
+	const [backingUp, setBackingUp] = useState(false);
 	const [returningToMeduza, setReturningToMeduza] = useState(false);
 	const returnToMeduza = async () => {
 		if (returningToMeduza) return;
@@ -49,7 +51,18 @@ export function EditorHeader() {
 			<nav className="flex items-center gap-2">
 				<button onClick={returnToMeduza} disabled={returningToMeduza} className="text-sm px-3 py-2">{returningToMeduza ? "Saving…" : "Projects"}</button>
 				<Link href="/about" target="_blank" className="text-xs text-muted-foreground">About</Link>
-				<AiTools />
+				<Button size="sm" variant="outline" disabled={backingUp} onClick={async () => {
+                    setBackingUp(true);
+                    try {
+                        await editor.save.flush();
+                        await downloadProjectBackup(editor.project.getActive().metadata.id);
+                    } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "Could not back up the project.");
+                    } finally {
+                        setBackingUp(false);
+                    }
+                }}>{backingUp ? "Preparing backup…" : "Back up project"}</Button>
+                <AiTools />
 				<ExportButton />
 				<ThemeToggle />
 			</nav>

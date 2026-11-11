@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { EditorCore } from "@/core";
 import { useEditor } from "@/editor/use-editor";
@@ -22,7 +22,6 @@ interface EditorProviderProps {
 
 export function EditorProvider({ projectId, children }: EditorProviderProps) {
 	const activeProject = useEditor((e) => e.project.getActiveOrNull());
-	const router = useRouter();
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const { setLoadingProject } = useKeybindingsStore();
@@ -55,15 +54,8 @@ export function EditorProvider({ projectId, children }: EditorProviderProps) {
 						err.message.includes("does not exist"));
 
 				if (isNotFound) {
-					try {
-						const newProjectId = await editor.project.createNewProject({
-							name: "Untitled Project",
-						});
-						router.replace(`/editor/${newProjectId}`);
-					} catch (_createErr) {
-						setError("Failed to create project");
-						setIsLoading(false);
-					}
+                    setError("This project is unavailable in this browser. Restore a backup or choose another project.");
+                    setIsLoading(false);
 				} else {
 					const wasmPanic = (window as Window & { __wasmPanic?: string })
 						.__wasmPanic;
@@ -85,13 +77,14 @@ export function EditorProvider({ projectId, children }: EditorProviderProps) {
 		return () => {
 			cancelled = true;
 		};
-	}, [projectId, router]);
+	}, [projectId]);
 
 	if (error) {
 		return (
 			<div className="bg-background flex h-screen w-screen items-center justify-center">
 				<div className="flex flex-col items-center gap-4">
 					<p className="text-destructive text-sm">{error}</p>
+                    <Link href="/projects" className="underline">Back to projects</Link>
 				</div>
 			</div>
 		);

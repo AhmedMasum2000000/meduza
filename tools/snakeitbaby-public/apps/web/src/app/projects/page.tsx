@@ -1,10 +1,11 @@
 "use client";
 
+import { restoreProjectBackup } from "@/project/backup";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { KeyboardEvent, MouseEvent } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { EditorCore } from "@/core";
 import { MigrationDialog } from "@/project/components/migration-dialog";
@@ -184,6 +185,7 @@ function ProjectsHeader() {
 
 				<div className="flex items-center gap-3 md:gap-4">
 					<SearchBar className="hidden md:block" />
+					<RestoreProjectButton />
 					<NewProjectButton />
 				</div>
 			</div>
@@ -502,6 +504,35 @@ function SortDropdown({ children }: { children: React.ReactNode }) {
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);
+}
+
+function RestoreProjectButton() {
+    const editor = useEditor();
+    const router = useRouter();
+    const input = useRef<HTMLInputElement>(null);
+    const [restoring, setRestoring] = useState(false);
+
+    return <>
+        <Button variant="outline" disabled={restoring} onClick={() => input.current?.click()}>
+            {restoring ? "Restoring…" : "Restore project"}
+        </Button>
+        <input ref={input} type="file" accept=".snakeitbaby" hidden onChange={async (event) => {
+            const file = event.currentTarget.files?.[0];
+            event.currentTarget.value = "";
+            if (!file) return;
+            setRestoring(true);
+            try {
+                const id = await restoreProjectBackup(file);
+                await editor.project.loadAllProjects();
+                toast.success("Restored as a new project");
+                router.push(`/editor/?project=${id}`);
+            } catch (error) {
+                toast.error(error instanceof Error ? error.message : "Could not restore the project.");
+            } finally {
+                setRestoring(false);
+            }
+        }} />
+    </>;
 }
 
 function NewProjectButton() {
