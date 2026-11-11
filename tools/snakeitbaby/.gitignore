@@ -1,0 +1,12 @@
+**/.venv/
+**/node_modules/
+**/.next/
+**/__pycache__/
+**/.env
+**/.env.*
+!**/.env.example
+**/*.session*
+**/*.log
+**/*.lockfile
+**/launcher.lock
+**/api.json
