@@ -1,6 +1,6 @@
 # Local Meduza editor
 
-The public edition is published separately at https://github.com/AhmedMasum2000000/snakeitbaby. This directory contains the optional local editor and media service.
+The public edition is documented in ../snakeitbaby-public/README.md. This directory contains the optional local editor and media service.
 
 The **Meduza Studio** desktop shortcut starts the local services. The workspace includes snakeitbaby, projects, the media library, Telegram inbox, and exports.
 
