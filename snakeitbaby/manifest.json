@@ -1,0 +1,16 @@
+{
+  "name": "snakeitbaby \u00b7 Meduza",
+  "short_name": "snakeitbaby",
+  "description": "Meduza's built-in video editor",
+  "display": "standalone",
+  "start_url": "/meduza/snakeitbaby/projects/",
+  "background_color": "#0a0a0b",
+  "theme_color": "#ffd400",
+  "icons": [
+    {
+      "src": "/meduza/snakeitbaby/meduza.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}

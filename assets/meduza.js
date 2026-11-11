@@ -26,10 +26,10 @@ const icons = {
 };
 const ico = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="${icons[n]}"/></svg>`;
 // Every page, grouped by what you are doing. Drives the sidebar and the home page.
-const editorWorkspace = "http://127.0.0.1:18465/#/home";
+const editorWorkspace = "./snakeitbaby/";
 const menuHref = (id) => id === "editor" ? editorWorkspace : "#/" + id;
 const GROUPS = [
-  ["Create", "Make videos from footage or a script.", [["studio", "New video", "A few choices, then the engine takes over"], ["editor", "Editor", "Open snakeitbaby, the media library, and Telegram inbox"]]],
+  ["Create", "Make videos from footage or a script.", [["studio", "New video", "A few choices, then the engine takes over"], ["editor", "Editor", "Edit videos in your browser"]]],
   ["Curate", "Pick what to make. Approve what goes out.", [["ideas", "Ideas", "Topics pulled from what is working"], ["review", "Review", "Approve or send back"], ["videos", "Library", "Everything finished"]]],
   ["Brands and socials", "Every brand, its pages and its schedule.", [["brands", "Brands", "Every brand and its pages"], ["accounts", "Accounts", "Log in to socials and file them by brand"], ["social", "Schedule", "What posts where, and when"], ["analytics", "Analytics", "Where viewers stay or leave"]]],
   ["Run", "Server, API keys, pipeline and spend.", [["war", "War room", "Health and money on one screen"], ["admin", "Admin", "API keys and your server"]]],
@@ -154,7 +154,7 @@ const V = {
   home: () => `
     <div class="reel">
       <a class="feature" href="#/studio"><div class="shot a1"><span class="medusa inv" style="--s:78%;position:absolute;left:11%;top:-6%"><i class="art"></i></span></div><h2>Studio<span class="badge">New</span></h2><p>Raw file or script in, finished cut out</p></a>
-      <a class="feature" href="${editorWorkspace}"><div class="shot a2"></div><h2>Editor</h2><p>Open snakeitbaby and your media library</p></a>
+      <a class="feature" href="${editorWorkspace}"><div class="shot a2"></div><h2>Editor</h2><p>Edit videos in snakeitbaby</p></a>
       <a class="feature" href="#/war"><div class="shot a3"></div><h2>War room</h2><p>Server, pipeline and spend on one screen</p></a>
       <a class="feature" href="#/brands"><div class="shot a4"></div><h2>Brands</h2><p>Any niche, any number of pages</p></a>
     </div>
@@ -198,7 +198,7 @@ const V = {
         <p class="muted" style="margin-top:10px">It joins the queue. The engine picks it up as soon as it is connected to your server.</p></div></div>
     </div>`,
 
-  editor: () => `<div class="head"><div><h1>Editor</h1><p class="lead">Open snakeitbaby, the media library, Telegram inbox, and exports on this PC.</p></div><a class="btn" href="${editorWorkspace}">Open snakeitbaby</a></div><section class="panel"><h2>Start the local workspace</h2><p>Use the Meduza Studio desktop shortcut if the editor is offline.</p></section>`,
+  editor: () => `<div class="head"><div><h1>Editor</h1><p class="lead">Import clips, edit a timeline, and export a video in snakeitbaby.</p></div><a class="btn" href="${editorWorkspace}">Open snakeitbaby</a></div>`,
   "video-details": () => { const x = job(sessionStorage.getItem("meduzaJob")) || mine(JOBS())[0]?.[6];
     if (!x) return `<div class="head"><div><h1>Editor</h1><p class="lead">Open a video to see its details and tell the engine what to change.</p></div></div>${empty("No videos yet. Make one in Studio first.").replace("#/brands", "#/studio").replace("Go to Brands", "New video")}`;
     const b = B(x.b);
